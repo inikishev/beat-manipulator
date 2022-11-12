@@ -1,4 +1,3 @@
-# BigOuncesAudioEffects
 Beat swapping and a whole bunch of other audio effects and stuff you can try with your music.
 
 # Basic how to use
@@ -25,7 +24,7 @@ make "every other beat is missing/swapped" type remixes
 - **scale** (optional) - this converts beats, for example if it is set to 0.5 it will convert every beat to two beats, and vice versa. It even supports uneven fractions.
 - **shift** (optional) - shifts all beats, because sometimes first beat isn't actually the first in the song (only supports integers)
 - **smoothing** (optional) - removes clicking where beats are stitched together, default value is 50.
-#### beats syntax
+#### swap syntax
 It is a string with integers separated by commas. Spaces can be used for formatting as they will be ignored. Example: `'4,1,1'`. That would mean it will play 4st, 1st, and 1st beat. Then it will loop and 8th, 5th, and 5th beats, and so on. It looped 4 beats because 4 was the biggest number in the sequence.
 
 `-` after a number removes that beat. For example, `'1, 2-, 3, 4'` means 2nd beat is removed, which is equvalent to `'1, 3, 4'`. However it is useful when you want to remove the last beat: `'1, 2, 3, 4-'` will properly loop 4 beats, while `'1, 2, 3'` will loop 3 beats and do nothing.
@@ -76,5 +75,5 @@ there are a ton of other effects but they are all kinda boring like volume. Ther
 
 # Notes
 - libraries used - `madmom` for BPM detection, `numpy` for most effects including beatswapping.
+- this was coded by Big ounce, gort and Quandale dingle
 - will work on python 3.9, maybe lower, not higher because of madmom, also if it doesn't work download and put ffmpeg.exe next to your .py file
-- this was coded by Gort and Quandale Dingle
