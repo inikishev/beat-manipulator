@@ -31,6 +31,8 @@ make "every other beat is missing/swapped" type remixes
 
 `audio=ba.beatswap(audio, beats, '1,2,3,4-')` - removes every 4th beat
 
+`audio=ba.beatswap(audio, beats, '1,2,2,3,4')` - plays every 2nd beat two times
+
 `audio=ba.beatswap(audio, beats, '8')` - plays only every 8th beat
 
 ### b_each(audio, audio2, beats, scale=1, shift=0)
