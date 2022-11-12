@@ -2,7 +2,7 @@
 Beat swapping and a whole bunch of other audio effects and stuff you can try with your music.
 
 # Basic how to use
-BigOuncesAudioEffects.py is the only file you need (put it next to your .py file so that you can import it). Copy the following into your .py, change `'path/to/audio'`, and it shall work.
+BigOuncesAudioEffects.py is the only file you need (put it next to your .py file so that you can import it, also put ffmpeg.exe next to it if it asks). Copy the following into your .py, change `'path/to/audio'`, and it shall work.
 ```
 import BigOuncesAudioEffects as ba
 # open the audio file with pedalboard:
