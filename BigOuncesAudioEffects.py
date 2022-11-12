@@ -257,3 +257,50 @@ def beats_madmom_variable_DBN(filename, samplerate):
     proc = madmom.features.beats.DBNBeatTrackingProcessor(fps=100)
     act = madmom.features.beats.RNNBeatProcessor()(filename)
     return proc(act)*samplerate
+
+def beatswap(audio, beats, swap:str,  scale=1, shift=0, smoothing=50):
+    print('start')
+    if shift>0 and shift%1==0:
+        for i in range(shift): beats=numpy.insert(beats, 0, i)
+    if scale!=1:
+        import math
+        a=0
+        b=numpy.array
+        while a <len( beats[:-math.ceil(scale)]):
+            b=numpy.append(b, (1-(a%1))*beats[math.floor(a)]+(a%1)*beats[math.ceil(a)])
+            a+=scale
+        beats = b
+    mode,n,audio2,sel,size='beat',0,numpy.asarray([[0],[0]]),0,0
+    # ready up!
+    for i in swap:
+        n+=1
+        if i==',' and mode=='': 
+            mode='beat'
+            sel=''
+            continue
+        if mode=='': 
+            continue
+        if i.isdigit(): sel=str(sel)+str(i)
+        #print(i, n, sel, len(swap), i.isdigit(), sel.isdigit(), ((not i.isdigit()) or len(swap)==n) and sel.isdigit(), sep=',    ')
+        if ((not i.isdigit()) or len(swap)==n) and sel.isdigit() and mode=='beat': 
+            size=max(int(sel), size)
+            sel=''
+            mode=''
+            if i==',': mode='beat'
+    #process!
+    mode='beat'
+    for j in range(int(len(beats)/size)):
+        n=0
+        for i in swap:
+            n+=1
+            if i.isdigit() and mode=='beat': 
+                sel=str(sel)+str(i)
+                #print(i, sel, sep=' | ')
+            if i=='-': sel=''
+            if ((not i.isdigit()) or len(swap)==n) and sel.isdigit() and mode=='beat':
+                sel=int(sel)-1+j*size
+                audio2=numpy.hstack((audio2, numpy.vstack((numpy.linspace(audio2[0,-1:], audio[0,int(beats[sel])], smoothing).T, numpy.linspace(audio2[1,-1:], audio[1,int(beats[sel])], smoothing).T)), audio[:,int(beats[sel]):int(beats[sel+1])]))
+                sel=''
+            #if i==',': mode='beat'
+    print('finish')
+    return audio2
