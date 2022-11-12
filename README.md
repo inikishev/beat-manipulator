@@ -41,8 +41,10 @@ play a sample every n beats
 - **scale** (optional) - if set to 0.5 it will play sample every 0.5 beats and so on.
 - **shift** (optional) - amount of beats to shift samples by. For example at 0.3 samples will be played on 1.3 beat, 2.3 beat and so on.
 #### example:
-```audio=ba.b_each(audio, kick, beats) # kick plays every beat
+```
+audio=ba.b_each(audio, kick, beats) # kick plays every beat
 audio=ba.b_each(audio, snare, beats, scale=2, shift=1) # snares 
-audio=ba.b_each(audio, hhat, beats, scale=0.5) # highhats every 0.5 beats```
+audio=ba.b_each(audio, hhat, beats, scale=0.5) # highhats every 0.5 beats
+```
 adds basic 4/4 beat to any song. If you find good samples it could make nice nightcore or something.
 Note - samples are added to the song which will probably cause clipping. I will fix at some point and also add sidechaining.
