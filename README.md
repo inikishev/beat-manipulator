@@ -13,7 +13,7 @@ beatswap(audio, beats, '1,3,4-)
 # export audio
 ba.w_pedalboard(audio, samplerate, output='pedalboard_output.mp3')
 ```
-You can import/export a file directly with pedalboard or any other library. You can also use beat detection directly from madmom or anything else. Just multiply beats by samplerate because madmom stores them in seconds and I store them in samples.
+Alternatively you can import/export a file directly with pedalboard or any other library. You can also use beat detection directly from madmom or anything else. Just multiply beats by samplerate because madmom stores them in seconds and I store them in samples.
 
 # Notable implemented effects:
 ### beatswap(audio, beats, swap:str,  scale=1, shift=0, smoothing=50)
@@ -26,8 +26,11 @@ make "every other beat is missing/swapped" type remixes
 - **smoothing** (optional) - removes clicking where beats are stitched together, default value is 50.
 #### examples:
 `audio=ba.beatswap(audio, beats, '1,3,2,4')` - swaps every 2nd and 3rd beat
+
 `audio=ba.beatswap(audio, beats, '1,3,4')` - removes 2nd beat every 4 beats
+
 `audio=ba.beatswap(audio, beats, '1,2,3,4-')` - removes every 4th beat
+
 `audio=ba.beatswap(audio, beats, '8')` - plays only every 8th beat
 
 ### b_each(audio, audio2, beats, scale=1, shift=0)
@@ -40,5 +43,6 @@ play a sample every n beats
 #### example:
 ```audio=ba.b_each(audio, kick, beats) # kick plays every beat
 audio=ba.b_each(audio, snare, beats, scale=2, shift=1) # snares 
-audio=ba.b_each(audio, hhat, beats, scale=0.5) # highhats every 0.5 beats``` - adds basic 4/4 beat to any song. If you find good samples it could make nice nightcore or something.
+audio=ba.b_each(audio, hhat, beats, scale=0.5) # highhats every 0.5 beats```
+adds basic 4/4 beat to any song. If you find good samples it could make nice nightcore or something.
 Note - samples are added to the song which will probably cause clipping. I will fix at some point and also add sidechaining.
