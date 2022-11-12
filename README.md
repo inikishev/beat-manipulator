@@ -1,5 +1,5 @@
 # BigOuncesAudioEffects
-Beat swapping and a whole bunch of other audio effects and stuff you can try with your music. Big ounce hasn't finished coding this one yet. Don't worry, he is being helped by none other than Gort and Quandale Dingle. Your beatswapping desires will be fulfilled very soon.
+Beat swapping and a whole bunch of other audio effects and stuff you can try with your music. Big ounce hasn't finished coding this one yet. Don't worry, he is being helped by Gort and Quandale Dingle. Your beatswapping desires will be fulfilled very soon.
 
 # How to use
 BigOuncesAudioEffects.py is the only file you need (put it next to your .py file so that you can import it). Copy the following into your .py, change 'path/to/audio', and it shall work.
@@ -20,20 +20,38 @@ Alternatively you can import/export a file directly with pedalboard or any other
 make "every other beat is missing/swapped" type remixes
 - **audio** - audio in numpy array format, you can get it using `(audio, samplerate)=ba.r_pedalboard('path/to/audio')`
 - **beats** - beats in numpy array format, obtain using madmom: `beats=ba.beats_madmom_constant('path/to/audio', samplerate)`
-- **swap** - a string with numbers separated by commas, that represents the order of the beats. For example '1,4,3', where biggest number is 4, so the order will repeat every 4 beats. To remove the last beat, add '-' after it, like '1,2,3,4-'. More functions will come later. You can also use spaces and brackets for formatting, they will be ignored.
+- **swap** - a string with numbers separated by commas, that represents the order of the beats. It has a hole Bunch of other functions as well. The syntax is explained below.
 - **scale** (optional) - this converts beats, for example if it is set to 0.5 it will convert every beat to two beats, and vice versa. It even supports uneven fractions.
 - **shift** (optional) - shifts all beats, because sometimes first beat isn't actually the first in the song (only supports integers)
 - **smoothing** (optional) - removes clicking where beats are stitched together, default value is 50.
+#### beats syntax
+It is a string with integers separated by commas. Spaces can be used for formatting as they will be ignored. Example: `'4,1,1'`. That would mean it will play 4st, 1st, and 1st beat. Then it will loop and 8th, 5th, and 5th beats, and so on. It looped 4 beats because 4 was the biggest number in the sequence.
+
+`-` after a number removes that beat. For example, `'1, 2-, 3, 4'` means 2nd beat is removed, which is equvalent to `'1, 3, 4'`. However it is useful when you want to remove the last beat: `'1, 2, 3, 4-'` will properly loop 4 beats, while `'1, 2, 3'` will loop 3 beats and do nothing.
+
+`r` after a number means that beat will be reversed. Example: `'1, 2r'` - every second beat will be reversed.
+
+`c` after a number allows you to cut that beat, must be followed by new `swap` string in brackets. Example: `'1, 2c(1, 2r, 4-), 3, 4`. That will cut 2nd beat into 4 parts and run all commands inside brackets. `c(1, 2-)` will cut beat in half; `c(1r, 2)` will reverse 1st half of the beat, etc. You can't do cut inside cut tho, but why would you?
+
+more functions are coming!
+
 #### examples:
-`audio=ba.beatswap(audio, beats, '1,3,2,4')` - swaps every 2nd and 3rd beat
+`audio=ba.beatswap(audio, beats, '1, 3, 2, 4')` - swaps every 2nd and 3rd beat
 
-`audio=ba.beatswap(audio, beats, '1,3,4')` - removes 2nd beat every 4 beats
+`audio=ba.beatswap(audio, beats, '1, 2, 4')` - removes 3nd beat every 4 beats
 
-`audio=ba.beatswap(audio, beats, '1,2,3,4-')` - removes every 4th beat
+`audio=ba.beatswap(audio, beats, '1, 2, 4-')` - removes every 3rd and 4th beat every 4 beats
 
-`audio=ba.beatswap(audio, beats, '1,1')` - plays every beat two times
+`audio=ba.beatswap(audio, beats, '1, 1')` - plays every beat two times
 
 `audio=ba.beatswap(audio, beats, '8')` - plays only every 8th beat
+
+`audio=ba.beatswap(audio, beats, '1r')` - reverses every beat
+
+`audio=ba.beatswap(audio, beats, '1c(1, 2-)' )` - cuts every beat in half
+
+`audio=ba.beatswap(audio, beats, '1c(1r 2r)' )` - reverses every half-beat
+
 
 ### b_each(audio, audio2, beats, scale=1, shift=0)
 play a sample every n beats
@@ -50,3 +68,11 @@ audio=ba.b_each(audio, hhat, beats, scale=0.5) # highhats every 0.5 beats
 ```
 adds basic 4/4 beat to any song. If you find good samples it could make nice nightcore or something.
 Note - samples are added to the song which will probably cause clipping. I will fix at some point and also add sidechaining.
+
+
+### Other
+there are a ton of other effects but they are all kinda boring like volume. There are some weird saturation effects. I will add them here at some point
+
+# Notes
+- libraries used - `madmom` for BPM detection, `numpy` for most effects including beatswapping.
+- will work on python 3.9, maybe lower, not higher because of madmom, also if it doesn't work download and put ffmpeg.exe next to your .py file
