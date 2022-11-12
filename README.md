@@ -10,7 +10,7 @@ import BigOuncesAudioEffects as ba
 # break it into beats with madmom
 beats=ba.beats_madmom_constant('path/to/audio', samplerate) # yes it needs to open the file again, i will fix that at some point
 # apply effects (removes every 2nd and 4th beat)
-beatswap(audio, beats, '1,3,4-)
+audio=ba.beatswap(audio, beats, '1,3,4-)
 # export audio
 ba.w_pedalboard(audio, samplerate, output='pedalboard_output.mp3')
 ```
