@@ -38,9 +38,10 @@
 #   w_pedalboard(audio, samplerate, output='pedalboard_output.mp3') - output a sound file. Can be any format that pedalboard supports.
 #   w_cv2image(audio, output='cv2_output.png', max=100000000) - output an image. To avoid the image being too big max=100000000 is pixel amount cap.
 
-import numpy, os
-if not os.path.exists('BigOuncesAudioEffects'):
-    os.mkdir('BigOuncesAudioEffects')
+import numpy
+#Import os
+#if not os.path.exists('BigOuncesAudioEffects'):
+    #os.mkdir('BigOuncesAudioEffects')
 #Open the file
 #Pedalboard
 def r_pedalboard(file: str):
@@ -243,7 +244,7 @@ def beats_madmom_variable(filename, samplerate):
         while chunk := f.read(8192):
             file_hash.update(chunk)
     try: 
-        with open("BigOuncesAudioEffects/v_"+file_hash.hexdigest(),"r") as f:
+        with open("SavedBeatmaps/v_"+file_hash.hexdigest(),"r") as f:
             return numpy.fromstring(f.read())
     except FileNotFoundError:
         from collections.abc import MutableMapping, MutableSequence
@@ -251,7 +252,7 @@ def beats_madmom_variable(filename, samplerate):
         proc = madmom.features.beats.BeatTrackingProcessor(fps=100)
         act = madmom.features.beats.RNNBeatProcessor()(filename)
         beats=proc(act)*samplerate
-        with open("BigOuncesAudioEffects/v_"+file_hash.hexdigest(),"a+") as f:
+        with open("SavedBeatmaps/v_"+file_hash.hexdigest(),"a+") as f:
             f.write(numpy.array2string(beats).replace('.',','))
     return beats
 
@@ -261,14 +262,14 @@ def beats_madmom_constant(filename, samplerate):
         file_hash = hashlib.blake2b()
         while chunk := f.read(8192):
             file_hash.update(chunk)
-    try: return numpy.loadtxt("BigOuncesAudioEffects/" + ''.join(filename.split('/')[-1]) + "c_"+file_hash.hexdigest()+'.txt')
+    try: return numpy.loadtxt("SavedBeatmaps/" + ''.join(filename.split('/')[-1]) + "c_"+file_hash.hexdigest()[:5]+'.txt')
     except OSError:
         from collections.abc import MutableMapping, MutableSequence
         import madmom
         proc = madmom.features.beats.BeatDetectionProcessor(fps=100)
         act = madmom.features.beats.RNNBeatProcessor()(filename)
         beats=proc(act)*samplerate
-        numpy.savetxt("BigOuncesAudioEffects/" + ''.join(filename.split('/')[-1]) + "c_"+file_hash.hexdigest()+'.txt', beats)
+        numpy.savetxt("SavedBeatmaps/" + ''.join(filename.split('/')[-1]) + "c_"+file_hash.hexdigest()[:5]+'.txt', beats)
         #with open("BigOuncesAudioEffects/c_"+file_hash.hexdigest()+'.txt',"a+") as f:
             #f.write(numpy.array2string(beats, formatter={'all':lambda x: str(x)}, separator=',').replace('[',))
     return(beats)
@@ -289,7 +290,9 @@ def beats_madmom_variable_DBN(filename, samplerate):
     return proc(act)*samplerate
 
 def beatswapworker(audio, beats, swap, smoothing):
-    mode,n,audio2,sel,size,cutx='beat',0,numpy.asarray([[0],[0]]),'',0,0
+    audio=(audio[0],audio[1])
+    #print(len(audio))
+    mode,n,audio2,sel,size,cutx='beat',0,([0],[0]),'',0,0
     # ready up!
     for i in swap:
         n+=1
@@ -330,7 +333,7 @@ def beatswapworker(audio, beats, swap, smoothing):
         for i in swap:
             n+=1
             #print('j=', j, ',   n=', n, ',   i=',i,',   sel=', sel, ',     mode: ', mode, sep='')
-            if i=='*' or i==' ': continue
+            if i=='-' or i==' ': continue
             if (i.isdigit()) and mode=='beat': 
                 #print('adding', str(sel), '+', str(i))
                 sel=str(sel)+str(i)
@@ -347,43 +350,64 @@ def beatswapworker(audio, beats, swap, smoothing):
                 #print('cutting: ', sel, ',  n =',n,'  cut =',cut,'  mask:', swap[n-cut:n-1])
                 #print('before:',len(audio[0,int(beats[int(sel)]):int(beats[int(sel)+1])]))
                 try:
-                    cut=beatswapworker(audio[:,int(beats[int(sel)]):int(beats[int(sel)+1])], [], swap[n-cut:n-1], smoothing)
-                    audio2=numpy.hstack((audio2,numpy.vstack((numpy.linspace(audio2[0,-1:], cut[0,0], smoothing).T, numpy.linspace(audio2[1,-1:], cut[1,0], smoothing).T)),cut))
+                    cut=beatswapworker(numpy.asarray(audio)[:,int(beats[int(sel)]):int(beats[int(sel)+1])], [], swap[n-cut:n-1], smoothing).tolist()
+                    for a in range(len(audio2)):
+                        audio2[a].extend(numpy.linspace(audio2[a][-1], cut[a][0], smoothing))
+                        audio2[a].extend(cut[a])
+                    #audio2=numpy.hstack((audio2,numpy.vstack((numpy.linspace(audio2[0,-1:], cut[0,0], smoothing).T, numpy.linspace(audio2[1,-1:], cut[1,0], smoothing).T)),cut))
                     mode='stop'
-                except: print('cut: out of bounds:', sel)
+                except IndexError: print('cut: out of bounds:', sel)
                 #print('done cutting')
             if ((not i.isdigit()) or len(swap)==n) and sel!=0 and mode=='beat':
                 sel=int(sel)-1+j*size
                 #print('adding beat:', sel)
-                try: audio2=numpy.hstack((audio2, numpy.vstack((numpy.linspace(audio2[0,-1:], audio[0,int(beats[sel])], smoothing).T, numpy.linspace(audio2[1,-1:], audio[1,int(beats[sel])], smoothing).T)), audio[:,int(beats[sel]):int(beats[sel+1])]))
-                except: print('add: out of bounds:', sel)
+                try: 
+                    for a in range(len(audio2)):
+                        audio2[a].extend(numpy.linspace(audio2[a][-1], audio[a][int(beats[sel])], smoothing))
+                        audio2[a].extend(audio[a][int(beats[sel]):int(beats[sel+1])])
+                        #audio2=numpy.hstack((audio2, numpy.vstack((numpy.linspace(audio2[0,-1:], audio[0,int(beats[sel])], smoothing).T, numpy.linspace(audio2[1,-1:], audio[1,int(beats[sel])], smoothing).T)), audio[:,int(beats[sel]):int(beats[sel+1])]))
+                except IndexError: print('add: out of bounds:', sel)
                 mode='effect'
             if i=='r' and mode=='effect': 
                 try:
                     #print('reversing:', sel, ', length =', len(audio[0,int(beats[sel]):int(beats[sel+1])]))
                     #print(len(audio[0,:]), len(audio2[0,:]), len(audio2[0,0:-len(audio[0,int(beats[sel]):int(beats[sel+1])])]))
-                    audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],numpy.vstack((numpy.linspace(audio2[0,-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[0,-1],smoothing).T,numpy.linspace(audio2[1,-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[1,-1],smoothing).T)),audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):][:,::-1]))
-                except: print('rev: out of bounds:', sel)
+                    for a in range(len(audio2)):
+                        audio2[a].extend(numpy.linspace(audio2[a][-len(audio[a][int(beats[sel]):int(beats[sel+1])])],audio2[a][-1],smoothing))
+                        audio2[a][a][-len(audio[0,int(beats[sel]):int(beats[sel+1])])] = audio2[a][a][-len(audio[0,int(beats[sel]):int(beats[sel+1])])][::-1]
+                        #audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],numpy.vstack((numpy.linspace(audio2[0,-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[0,-1],smoothing).T,numpy.linspace(audio2[1,-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[1,-1],smoothing).T)),audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):][:,::-1]))
+                except IndexError: print('rev: out of bounds:', sel)
                 #mode='effect'
             if i=='m' and mode=='effect':
-                try: audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*0))
-                except: pass
+                try: 
+                    audio2=numpy.asarray(audio2)
+                    audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*=0
+                    audio2=audio2.tolist()
+                    #audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*0))
+                except IndexError: pass
             if i=='l' and mode=='effect':
-                try: audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*10))
-                except: pass
+                try: 
+                    audio2=numpy.asarray(audio2)
+                    audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*=10
+                    audio2=audio2.tolist()
+                    #audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*10))
+                except IndexError: pass
             if (i==',' or len(swap)==n) and mode!='cut': 
                 sel=0
                 mode='beat'
     #print(len(audio2[0]))
-    return audio2
+    #print(numpy.asarray(audio2).shape)
+    #if cutx==0: print( numpy.asarray(audio2))
+    return numpy.asarray(audio2, dtype=float)
 
 def beatswap(audio, beats, swap:str,  scale=1, shift=0, smoothing=50):
     #print(scale)
-    if (beats[1] - beats[0])>=80000: scale/=8
-    elif (beats[1] - beats[0])>=40000: scale/=4
-    elif (beats[1] - beats[0])>=20000: scale/=2
-    elif (beats[1] - beats[0])<=10000: scale*=2
-    elif (beats[1] - beats[0])<=5000: scale*=4
+    if (beats[1] - beats[0])>=160000: scale/=8
+    elif (beats[1] - beats[0])>=80000: scale/=4
+    elif (beats[1] - beats[0])>=40000: scale/=2
+    elif (beats[1] - beats[0])<=20000: scale*=2
+    elif (beats[1] - beats[0])<=10000: scale*=4
+    elif (beats[1] - beats[0])<=5000: scale*=8
     #print(scale)
     if scale!=1:
         import math
