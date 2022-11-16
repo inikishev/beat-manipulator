@@ -80,3 +80,4 @@ there are a ton of other effects but they are all kinda boring like volume. Ther
 - libraries used - `madmom` for BPM detection, `numpy` for most effects including beatswapping.
 - this was coded by Big ounce, gort and Quandale dingle
 - will work on python 3.9, maybe lower, not higher because of madmom, also if it doesn't work download and put ffmpeg.exe next to your .py file
+- I started porting it from numpy to .extend() which is like 100 times faster.
