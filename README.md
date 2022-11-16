@@ -32,12 +32,11 @@ It is a string with integers separated by commas. Spaces can be used for formatt
 
 `r` after a number means that beat will be reversed. Example: `'1, 2r'` - every second beat will be reversed.
 
-~~`c` after a number allows you to cut that beat, must be followed by new `swap` string in brackets. Example: `'1, 2c(1, 2r, 4-), 3, 4`. That will cut 2nd beat into 4 parts and run all commands inside brackets. `c(1, 2-)` will cut beat in half; `c(1r, 2)` will reverse 1st half of the beat, etc. You can't do cut inside cut tho because there is no point. Also an alternative to cut is reducing the scale parameter.~~ 
-**Currently rather slow so reduce the scale instead. Even very low scales with many operations are very fast.**
+~~`c` after a number allows you to cut that beat, must be followed by new `swap` string in brackets. Example: `'1, 2c(1, 2r, 4-), 3, 4`. That will cut 2nd beat into 4 parts and run all commands inside brackets. `c(1, 2-)` will cut beat in half; `c(1r, 2)` will reverse 1st half of the beat, etc. You can't do cut inside cut tho because there is no point. Also an alternative to cut is reducing the scale parameter.~~ Currently rather slow so reduce the scale instead. Even very low scales with many operations are very fast.
 
-`l` - makes beat loud, useful for understanding which beat is which
+~~`l` - makes beat loud, useful for understanding which beat is which.~~ Broken
 
-`m` - mutes the beat
+~~`m` - mutes the beat.~~ Broken
 
 #### examples:
 `audio=ba.beatswap(audio, beats, '1, 3, 2, 4')` - swaps every 2nd and 3rd beat
