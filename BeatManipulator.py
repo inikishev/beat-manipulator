@@ -374,14 +374,14 @@ def beatswapworker(audio, beats, swap, smoothing):
                     #print(len(audio[0,:]), len(audio2[0,:]), len(audio2[0,0:-len(audio[0,int(beats[sel]):int(beats[sel+1])])]))
                     for a in range(len(audio2)):
                         audio2[a].extend(numpy.linspace(audio2[a][-len(audio[a][int(beats[sel]):int(beats[sel+1])])],audio2[a][-1],smoothing))
-                        audio2[a][a][-len(audio[0,int(beats[sel]):int(beats[sel+1])])] = audio2[a][a][-len(audio[0,int(beats[sel]):int(beats[sel+1])])][::-1]
+                        audio2[a][-len(audio[a][int(beats[sel]):int(beats[sel+1])]):] = reversed(audio2[a][-len(audio[a][int(beats[sel]):int(beats[sel+1])]):])
                         #audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],numpy.vstack((numpy.linspace(audio2[0,-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[0,-1],smoothing).T,numpy.linspace(audio2[1,-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[1,-1],smoothing).T)),audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):][:,::-1]))
-                except IndexError: print('rev: out of bounds:', sel)
+                except FileExistsError: print('rev: out of bounds:', sel)
                 #mode='effect'
             if i=='m' and mode=='effect':
                 try: 
                     audio2=numpy.asarray(audio2)
-                    audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*=0
+                    audio2[:,-len(audio[0][int(beats[sel]):int(beats[sel+1])]):]*=0
                     audio2=audio2.tolist()
                     #audio2=numpy.hstack((audio2[:,:-len(audio[0,int(beats[sel]):int(beats[sel+1])])],audio2[:,-len(audio[0,int(beats[sel]):int(beats[sel+1])]):]*0))
                 except IndexError: pass
