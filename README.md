@@ -26,7 +26,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - `'1,2,2,3'` - repeat 2nd beat
 - `'1, 1:1.5, 4'` - play a range of beats. `0:0.5` means first half of 1st beat. Keep that in mind, to play first half of 5th beat, you do `4:4.5`, not `5:5.5`. `1` is equivalent to `0:1`. `1.5` is equivalent to `0.5:1.5`. `1,2,3,4` is `0:4`.
 - `'1, 0:1/3, 0:1/3, 2/3:1'` - you can use expressions with `+`, `-`, `*`, `/`.
-- `?` after a beat makes that number not count for looping. `'1, 2, 3, 4!, 8?'` every 4 beats, 4th beat is replaced with 8th beat.
+- `?` after a beat makes that number not count for looping. `'1, 2, 3, 4!, 8?'` - every 4 beats, 4th beat is replaced with 8th beat.
 - `v` + number - controls volume of that beat. `'1v2'` means 200% volume, `1v1/3` means 33.33% volume, etc.
 - `r` after a beat reverses that beat. `'1r, 2'` - every two beats first beat will be reversed
 - another way to reverse - `4:0` is reversed `0:4`.
