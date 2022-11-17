@@ -34,6 +34,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - `c` - swaps left and right channels of the beat. If followed by 0, mutes left channel, 1 - right channel.
 - `b` + number - bitcrush. The higher the number, the stronger the effect. Barely noticeable at values less then 1
 - `d` + number - downsample (8-bit sound). The higher the number, the stronger the effect. Starts being noticeable at 3, good 8-bit sounding values are around 8+.
+- `t` + number - saturation
 - you can combine stuff like `0:1/3d8v2cr` - that line means 0:1/3 beat will be downsampled, 200% volume, swapped channels, and reversed
 
 ### Other
