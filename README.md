@@ -16,6 +16,8 @@ By default processed audio will be outputted into the same folder as your .py fi
 
 Alternatively you can import/export audio directly with pedalboard or any other library. Make sure the audio array looks similar to `[[-0.4, 0.3, ...],[-0.3, 1, ...]]`, which is how pedalboard imports it.
 
+Another useful parameter is scale: `bm.beatswap(pattern='1,3,2,4', scale=0.5)` - that means all beats will be 2 times smaller.
+
 # Pattern syntax
 Patterns are sequences of numbers separated by `,`. Spaces can be freely used for formatting as they will be ignored.
 - `'1, 3, 2, 4'` - every 4 beats, swap 2nd and 3rd beat. This pattern loops every 4 beats, because 4 is the biggest number in it.
