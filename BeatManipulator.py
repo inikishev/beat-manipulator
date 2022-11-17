@@ -71,7 +71,21 @@ def write_audio(audio, output='BeatManipulator.mp3', samplerate=44100, lib='peda
     
 
 # ''.join(filename.split('/')[-1]).split('.')[:-1])+'_bm.mp3'
-        
+def beatswap_getnum(i: str, c: str):
+    if c in i:
+        try: 
+            x=i.index(c)+1
+            z=''
+            try:
+                while i[x].isdigit() or i[x]=='.' or i[x]=='-' or i[x]=='/' or i[x]=='+' or i[x]=='%': 
+                    z+=i[x]
+                    x+=1
+                return z
+            except IndexError:
+                return z
+
+        except ValueError: return None
+
 def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0, end=None, autoscale=False, autoinsert=True, trim=True, sep=',', smoothing=40, smoothing_mode='replace', audio= None, samplerate=None, beatmap=None, libBeat='madmom.BeatDetectionProcessor', caching=True):
     import math, numpy
 
@@ -86,17 +100,21 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
         if audio is None or samplerate is None:
             (audio, samplerate) = open_audio(filename)
 
+    # analyze beats
+    if beatmap is None:
+        beatmap=analyze_beats(filename=filename, samplerate=samplerate, lib=libBeat, caching=caching)
+
     #trim silence
     if trim is True:
         n=0
         for i in audio[0]:
-            if i>=0.001:break
+            if i>=0.0001:break
             n+=1
         audio = numpy.asarray([audio[0,n:], audio[1,n:]])
+        #print(beatmap)
+        beatmap=numpy.absolute(beatmap-n)
+        #print(beatmap)
 
-    # analyze beats
-    if beatmap is None:
-        beatmap=analyze_beats(filename=filename, audio=audio, samplerate=samplerate, lib=libBeat, caching=caching)
 
     #import time
     #benchmark = time.process_time()
@@ -189,10 +207,8 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
     # processing
     for j in range(iterations):
         for i in pattern:
-            s,z='',''
-            st = None
             if '!' not in i:
-                n,s,st=0,'',None
+                n,s,st,reverse,z=0,'',None,False,None
                 for c in i:
                     n+=1
                     #print('s =', s, ',  st =', st, ',   c =', c, ',   n =,',n)
@@ -227,33 +243,84 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
                                 s=beatmap[int(eval(s)//1)+j*size ] + eval(s)%1* (beatmap[int(eval(s)//1)+j*size +1] - beatmap[int(eval(s)//1)+j*size])
                             except IndexError: break
                         
+                        if st>s: 
+                            s, st=st, s
+                            reverse=True
+
                         # create the beat
-                        for a in range(len(audio)): 
-                            if len(audio)>1: 
-                                if smoothing_mode=='add': beat=numpy.asarray([audio[0][int(st):int(s)],audio[1][int(st):int(s)]])
-                                else: beat=numpy.asarray([audio[0][int(st):int(s)-smoothing],audio[1][int(st):int(s)-smoothing]])
-                            else:
-                                if smoothing_mode=='add': beat=numpy.asarray([audio[0][int(st):int(s)]])
-                                else: beat=numpy.asarray([audio[0][int(st):int(s)-smoothing]])
+                        if len(audio)>1: 
+                            if smoothing_mode=='add': beat=numpy.asarray([audio[0][int(st):int(s)],audio[1][int(st):int(s)]])
+                            else: beat=numpy.asarray([audio[0][int(st):int(s)-smoothing],audio[1][int(st):int(s)-smoothing]])
+                        else:
+                            if smoothing_mode=='add': beat=numpy.asarray([audio[0][int(st):int(s)]])
+                            else: beat=numpy.asarray([audio[0][int(st):int(s)-smoothing]])
 
                         # process the beat
-                        if c=='v':
-                            x=n
-                            try:
-                                while i[x].isdigit() or i[x]=='.' or i[x]=='-' or i[x]=='/' or i[x]=='+' or i[x]=='%': 
-                                    z+=i[x]
-                                    x+=1
-                            except IndexError:
-                                #print('volume:', z)
-                                if z=='': z='0'
-                                #print(1, beat)
-                                beat*=eval(z)
-                                #print(2, beat)
+                        # channels
+                        z=beatswap_getnum(i,'c')
+                        if z is not None:
+                            if z=='': beat[0],beat[1]=beat[1],beat[0]
+                            elif eval(z)==0:beat[0]*=0
+                            else:beat[1]*=0
+
+                        # volume
+                        z=beatswap_getnum(i,'v')
+                        if z is not None:
+                            if z=='': z='0'
+                            beat*=eval(z)
+
+                        z=beatswap_getnum(i,'t')
+                        if z is not None:
+                            if z=='': z='2'
+                            beat**=1/eval(z)
+
+                        # speed
+                        z=beatswap_getnum(i,'s')
+                        if z is not None:
+                            if z=='': z='2'
+                            z=eval(z)
+                            if z<1: 
+                                if len(beat) >1:
+                                    beat=numpy.asarray((numpy.repeat(beat[0],int(1//z)),numpy.repeat(beat[1],int(1//z))))
+                                else: beat=numpy.asarray((numpy.repeat(beat, int(1//z))))
+                            else:
+                                if len(beat) >1:
+                                    beat=numpy.asarray((beat[0,::int(z)],beat[1,::int(z)]))
+                                else: beat=numpy.asarray(beat[0,::int(z)])
+                        
+                        # bitcrush
+                        z=beatswap_getnum(i,'b')
+                        if z is not None:
+                            if z=='': z='3'
+                            z=1/eval(z)
+                            if z<1: beat=beat*z
+                            beat=numpy.around(beat, max(int(z), 1))
+                            if z<1: beat=beat/z
+
+                        # downsample
+                        z=beatswap_getnum(i,'d')
+                        if z is not None:
+                            if z=='': z='3'
+                            z=int(eval(z))
+                            if len(beat) >1:
+                                beat=numpy.asarray((numpy.repeat(beat[0,::z],z),numpy.repeat(beat[1,::z],z)))
+                            else: beat=numpy.asarray((numpy.repeat(beat[::z], z)))
+
+                        # convert to list
                         beat=beat.tolist()
+
+                        # effects with list
+                        # reverse
+                        if ('r' in i and reverse is False) or (reverse is True and 'r' not in i):
+                            if len(beat) >1:
+                                beat=(beat[0][::-1],beat[1][::-1] )
+                            else:beat=(beat[::-1])
 
                         # add beat to the result
                         for a in range(len(audio)): 
                             #print('Adding beat... a, s, st:', a, s, st, sep=',  ')
+                            #print(result[a][-1])
+                            #print(beat[a][0])
                             if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[a][0],smoothing))
                             result[a].extend(beat[a])
                             #print(len(result[0]))
