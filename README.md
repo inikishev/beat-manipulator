@@ -1,83 +1,37 @@
 ## dpe's beat manipulator
-Advanced beat swapping, WIP
+Advanced beat swapping powered by madmom https://github.com/CPJKU/madmom
 
 # Basic how to use
-BeatManipulator.py is the only file you need (put it next to your .py file so that you can import it, also put ffmpeg.exe next to it if it asks). Copy the following into your .py, change `'path/to/audio'`, and it shall work.
+BeatManipulator.py is the only file you need. Put it next to your .py file so that you can import it (if it errors also put ffmpeg.exe next to it). Copy the following into your .py:
 ```
 import BeatManipulator as bm
-# open the audio file with pedalboard:
-(audio, samplerate)=bm.r_pedalboard('path/to/audio')
-# break it into beats with madmom
-beats=bm.beats_madmom_constant('path/to/audio', samplerate) # yes it needs to open the file again, i will fix that at some point
-# apply effects (removes every 2nd and 4th beat)
-audio=bm.beatswap(audio, beats, '1,3,4-`)
-# export audio
-bm.w_pedalboard(audio, samplerate, output='pedalboard_output.mp3')
+bm.beatswap(pattern='1,3,2,4')
 ```
-Alternatively you can import/export audio directly with pedalboard or any other library. You can also use beat detection directly from madmom or anything else. Just multiply beats by samplerate because madmom stores them in seconds and I store them in samples.
+It will let you pick an audio file, analyze it using madmom, and swap every 2nd and 3rd beats. Analyzing beats for the first time will take some time, but it also saves beatmaps, so opening already analyzed file is much faster.
 
-# Notable implemented effects:
-### beatswap(audio, beats, swap:str,  scale=1, shift=0, smoothing=50)
-make "every other beat is missing/swapped" type remixes
-- **audio** - audio in numpy array format, you can get it using `(audio, samplerate)=bm.r_pedalboard('path/to/audio')`
-- **beats** - beats in numpy array format, obtain using madmom: `beats=bm.beats_madmom_constant('path/to/audio', samplerate)`
-- **swap** - a string with numbers separated by commas, that represents the order of the beats. It has a hole Bunch of other functions as well. The syntax is explained below.
-- **scale** (optional) - this converts beats, for example if it is set to 0.5 it will convert every beat to two beats, and vice versa. It even supports uneven fractions.
-- **shift** (optional) - shifts all beats, because sometimes first beat isn't actually the first in the song (only supports integers)
-- **smoothing** (optional) - removes clicking where beats are stitched together, default value is 50.
-#### swap syntax
-It is a string with integers separated by commas. Spaces can be used for formatting as they will be ignored. Example: `'4,1,1'`. That would mean it will play 4st, 1st, and 1st beat. Then it will loop and 8th, 5th, and 5th beats, and so on. It looped 4 beats because 4 was the biggest number in the sequence.
+You can also specify audio file to be opened: `bm.beatswap(filename='/path/to/file', pattern='1,3,2,4')`
 
-`-` after a number removes that beat. For example, `'1, 2-, 3, 4'` means 2nd beat is removed, which is equvalent to `'1, 3, 4'`. However it is useful when you want to remove the last beat: `'1, 2, 3, 4-'` will properly loop 4 beats, while `'1, 2, 3'` will loop 3 beats and do nothing.
+By default processed audio will be outputted into the same folder as your .py file, and will use original file name with a `_bm` suffix. To change that, specify output parameter: 
+`bm.beatswap(pattern='1,3,2,4', output='/path/to/output')`, or add file extension to override filename: `bm.beatswap(pattern='1,3,2,4', output='/path/to/output/output.mp3')`
 
-`r` after a number means that beat will be reversed. Example: `'1, 2r'` - every second beat will be reversed.
+Alternatively you can import/export audio directly with pedalboard or any other library. Make sure the audio array looks similar to `[[-0.4, 0.3, ...],[-0.3, 1, ...]]`, which is how pedalboard imports it.
 
-~~`c` after a number allows you to cut that beat, must be followed by new `swap` string in brackets. Example: `'1, 2c(1, 2r, 4-), 3, 4`. That will cut 2nd beat into 4 parts and run all commands inside brackets. `c(1, 2-)` will cut beat in half; `c(1r, 2)` will reverse 1st half of the beat, etc. You can't do cut inside cut tho because there is no point. Also an alternative to cut is reducing the scale parameter.~~ Currently rather slow so reduce the scale instead. Even very low scales with many operations are very fast.
-
-~~`l` - makes beat loud, useful for understanding which beat is which.~~ Broken
-
-~~`m` - mutes the beat.~~ Broken
-
-#### examples:
-`audio=ba.beatswap(audio, beats, '1, 3, 2, 4')` - swaps every 2nd and 3rd beat
-
-`audio=ba.beatswap(audio, beats, '1, 2, 4')` - removes 3nd beat every 4 beats
-
-`audio=ba.beatswap(audio, beats, '1, 2, 4-')` - removes every 3rd and 4th beat every 4 beats
-
-`audio=ba.beatswap(audio, beats, '1, 1')` - plays every beat two times
-
-`audio=ba.beatswap(audio, beats, '8')` - plays only every 8th beat
-
-`audio=ba.beatswap(audio, beats, '1r')` - reverses every beat
-
-`audio=ba.beatswap(audio, beats, '1c(1, 2-)' )` - cuts every beat in half
-
-`audio=ba.beatswap(audio, beats, '1c(1r 2r)' )` - reverses every half-beat
-
-
-### b_each(audio, audio2, beats, scale=1, shift=0)
-play a sample every n beats
-- **audio** - song audio in numpy array format, you can get it using `(audio, samplerate)=bm.r_pedalboard('path/to/audio')`
-- **audio2** - sample audio in numpy array format, same deal
-- **beats** - beats in numpy array format, obtain using madmom: `beats=ba.beats_madmom_constant('path/to/audio', samplerate)`
-- **scale** (optional) - if set to 0.5 it will play sample every 0.5 beats and so on.
-- **shift** (optional) - amount of beats to shift samples by. For example at 0.3 samples will be played on 1.3 beat, 2.3 beat and so on.
-#### example:
-```
-audio=bm.b_each(audio, kick, beats) # kick plays every beat
-audio=bm.b_each(audio, snare, beats, scale=2, shift=1) # snares 
-audio=bm.b_each(audio, hhat, beats, scale=0.5) # highhats every 0.5 beats
-```
-adds basic 4/4 beat to any song. If you find good samples it could make nice nightcore or something.
-Note - samples are added to the song which will probably cause clipping. I will fix at some point and also add sidechaining.
-
+# Pattern syntax
+Patterns are sequences of numbers separated by `,`. Spaces can be freely used for formatting as they will be ignored.
+- `'1, 3, 2, 4'` - every 4 beats, swap 2nd and 3rd beat. This pattern loops every 4 beats, because 4 is the biggest number in it.
+- `!` after a number makes the pattern loop this amount of times. `'1, 3, 2, 4, 8!'` - every 8 beats, swap 2nd and 3rd beat.
+- `'1, 3, 4'` - skip 2nd beat
+- `'1,2,2,3'` - repeat 2nd beat
+- `'1, 1:1.5, 4' - play a range of beats. `0:0.5` means first half of 1st beat. Keep that in mind, to play first half of 5th beat, you do `4:4.5`, not `5:5.5`. `1` is equivalent to `0:1`. `1.5` is equivalent to `0.5:1.5`. `1,2,3,4` is `0:4`.
+- `'1, 0:1/3, 0:1/3, 2/3:1'` - you can use expressions with `+`, `-`, `*`, `/`.
+- `?` after a beat makes that number not count for looping. `'1, 2, 3, 4!, 8?'` every 4 beats, 4th beat is replaced with 8th beat.
+- `v` and a number after a beat changes volume of that beat. `'1v2'` means 200% volume, `1v1/3` means 33.33% volume, etc.
+- `r` after a beat reverses that beat. `'1r, 2'` - every two beats first beat will be reversed
 
 ### Other
-there are a ton of other effects but they are all kinda boring like volume. There are some weird saturation effects. I will add them here at some point
+There are also functions to play a sound every x beats or to sidechain every x beats, soon
 
 # Notes
-- libraries used - `madmom` for BPM detection, `numpy` for most effects including beatswapping.
+- libraries used - `madmom` for BPM detection, `pedalboard.io` for import/export, `numpy` for most effects including beatswapping.
 - this was coded by Big ounce, gort and Quandale dingle
 - will work on python 3.9, maybe lower, not higher because of madmom, also if it doesn't work download and put ffmpeg.exe next to your .py file
-- I started porting it from numpy to .extend() which is like 100 times faster.
