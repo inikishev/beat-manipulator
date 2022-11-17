@@ -30,7 +30,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - `v` and a number after a beat changes volume of that beat. `'1v2'` means 200% volume, `1v1/3` means 33.33% volume, etc.
 - `r` after a beat reverses that beat. `'1r, 2'` - every two beats first beat will be reversed
 - another way to reverse - `4:0` is reversed `0:4`.
-- `s` after a beat changes speed and pitch of that beat. 2 will be 2 times faster, 1/2 will be 2 times slower. Note: Only integers or 1/integer numbers are supported, everything else will be rounded.
+- `s` and a number after a beat changes speed and pitch of that beat. 2 will be 2 times faster, 1/2 will be 2 times slower. Note: Only integers or 1/integer numbers are supported, everything else will be rounded.
 - `c` - swaps left and right channels of the beat
 
 ### Other
