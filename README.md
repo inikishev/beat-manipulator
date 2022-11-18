@@ -5,18 +5,17 @@ Advanced beat swapping powered by madmom https://github.com/CPJKU/madmom
 BeatManipulator.py is the only file you need. Put it next to your .py file so that you can import it (if it errors also put ffmpeg.exe next to it). Copy the following into your .py:
 ```
 import BeatManipulator as bm
-bm.beatswap(pattern='1,3,2,4')
+bm.wrapper_beatswap(filename=None, pattern='1,3,2,4', scale=1, shift=0, start=0, end=None)
 ```
 It will let you pick an audio file, analyze it using madmom, and swap every 2nd and 3rd beats. Analyzing beats for the first time will take some time, but it also saves beatmaps, so opening already analyzed file is much faster.
 
-You can also specify audio file to be opened: `bm.beatswap(filename='/path/to/file', pattern='1,3,2,4')`
+You can also specify audio file to be opened by changing filename from None to '/path/to/file.mp3'
 
-By default processed audio will be outputted into the same folder as your .py file, and will use original file name with a `_bm` suffix. To change that, specify output parameter: 
-`bm.beatswap(pattern='1,3,2,4', output='/path/to/output')`, or add file extension to override filename: `bm.beatswap(pattern='1,3,2,4', output='/path/to/output/output.mp3')`
+By default processed audio will be outputted into the same folder as your .py file, and will use original file name with a `_bm` suffix. To change that, specify output parameter: `output='/path/to/output')`, or add file extension to override filename: `output='/path/to/output/file.mp3')`
 
-Alternatively you can import/export audio directly with pedalboard or any other library. Make sure the audio array looks similar to `[[-0.4, 0.3, ...],[-0.3, 1, ...]]`, which is how pedalboard imports it.
+Alternatively you can import/export audio directly with pedalboard or any other library. Make sure the audio array looks similar to `[[-0.4, 0.3, ...],[-0.3, 1, ...]]`, which is how pedalboard imports it. Do not feed pedalboard audio into madmom, it will have an offset. Madmom can open a file directly which is what I recommend. 
 
-Another useful parameter is scale: `bm.beatswap(pattern='1,3,2,4', scale=0.5)` - that means all beats will be 2 times smaller.
+Useful parameters: `scale=0.5` that means all beats will be 2 times smaller. `shift=-0.5` means pattern will be shifted 0.5 scaled beats left. `start`, `end` take a number of seconds and only beats in that interval will be processed.
 
 # Pattern syntax
 Patterns are sequences of numbers or ranges, separated by `,`. Numbers and ranges can be followed by letters that apply effects to them. Spaces can be freely used for formatting as they will be ignored. Any other character that isn't used in the syntax can also be used for formatting but only between beats, not inside them.
