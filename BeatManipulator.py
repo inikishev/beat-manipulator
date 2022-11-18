@@ -11,9 +11,8 @@ def open_audio(filename=None, lib='pedalboard.io'):
     return audio,samplerate
 
 
-def analyze_beats(filename=None, audio=None, samplerate=44100, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
-    if audio is None and filename is None: (audio, samplerate) = open_audio()
-
+def analyze_beats(filename, audio, samplerate, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
+    #if audio is None and filename is None: (audio, samplerate) = open_audio()
     if caching is True and filename is not None:
         import hashlib
         with open(filename, "rb") as f:
@@ -27,13 +26,11 @@ def analyze_beats(filename=None, audio=None, samplerate=44100, lib='madmom.BeatD
         cacheDir="SavedBeatmaps/" + ''.join(filename.split('/')[-1]) + lib+"_"+file_hash.hexdigest()[:5]+'.txt'
         try: return numpy.loadtxt(cacheDir, dtype=int)
         except OSError: pass
-        
+
     if lib.split('.')[0]=='madmom':
         from collections.abc import MutableMapping, MutableSequence
         import madmom
-        if audio is None: audio=filename
-        else: 
-            audio=madmom.audio.signal.Signal(audio.T, samplerate)
+        audio=filename
 
     if lib=='madmom.BeatTrackingProcessor':
         proc = madmom.features.beats.BeatTrackingProcessor(fps=100)
@@ -61,7 +58,7 @@ def analyze_beats(filename=None, audio=None, samplerate=44100, lib='madmom.BeatD
     if caching is True: numpy.savetxt(cacheDir, beatmap.astype(int))
     return beatmap
     
-def write_audio(audio, output='BeatManipulator.mp3', samplerate=44100, lib='pedalboard.io'):
+def write_audio(audio, samplerate, output, lib='pedalboard.io'):
     if lib=='pedalboard.io':
         import numpy
         if not isinstance(audio,numpy.ndarray): audio=numpy.asarray(audio)
@@ -83,58 +80,72 @@ def beatswap_getnum(i: str, c: str):
                 return z
             except IndexError:
                 return z
-
         except ValueError: return None
 
-def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0, end=None, autoscale=False, autoinsert=True, trim=True, sep=',', smoothing=40, smoothing_mode='replace', audio= None, samplerate=None, beatmap=None, libBeat='madmom.BeatDetectionProcessor', caching=True):
-    import math, numpy
 
-    # ask for a file
-    if audio is None and filename is None:
-        from tkinter.filedialog import askopenfilename
-        filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
-    
-    # open the file
-    if filename is not None: 
-        filename=filename.replace('\\', '/')
-        if audio is None or samplerate is None:
-            (audio, samplerate) = open_audio(filename)
-
-    # analyze beats
-    if beatmap is None:
-        beatmap=analyze_beats(filename=filename, samplerate=samplerate, lib=libBeat, caching=caching)
-
-    #trim silence
-    if trim is True:
-        n=0
-        for i in audio[0]:
-            if i>=0.0001:break
-            n+=1
-        audio = numpy.asarray([audio[0,n:], audio[1,n:]])
-        #print(beatmap)
+def audio_autotrim(audio,beatmap=None):
+    import numpy
+    n=0
+    for i in audio[0]:
+        if i>=0.0001:break
+        n+=1
+    audio = numpy.asarray([audio[0,n:], audio[1,n:]])
+    #print(beatmap)
+    if beatmap is not None: 
         beatmap=numpy.absolute(beatmap-n)
-        #print(beatmap)
+        return audio,beatmap
+    else: return audio
 
 
-    #import time
-    #benchmark = time.process_time()
-    if not isinstance(beatmap,numpy.ndarray): beatmap=numpy.asarray(beatmap)
-
-    #normalize BPM
-    diff=(beatmap[1]-beatmap[0])
+def beatmap_autoscale(beatmap):
     bpm=(beatmap[-1]-beatmap[0])/(len(beatmap)-1)
     #print('BPM =', (bpm/samplerate) * 240, bpm)
-    if autoscale is True:
-        if bpm>=160000: scale/=8
-        elif (bpm)>=80000: scale/=4
-        elif (bpm)>=40000: scale/=2
-        elif (bpm)<=20000: scale*=2
-        elif (bpm)<=10000: scale*=4
-        elif (bpm)<=5000: scale*=8
+    if bpm>=160000: scale/=8
+    elif (bpm)>=80000: scale/=4
+    elif (bpm)>=40000: scale/=2
+    elif (bpm)<=20000: scale*=2
+    elif (bpm)<=10000: scale*=4
+    elif (bpm)<=5000: scale*=8
+    return beatmap
 
-    # add beat to the end
-    beatmap=numpy.append(beatmap, len(audio[0]))
 
+# add beat to the end
+#beatmap=numpy.append(beatmap, len(audio[0]))
+    
+def beatmap_scale(beatmap, scale):
+    import numpy, math
+    if scale!=1:
+        a=0
+        b=numpy.array([])
+        while a <len( beatmap[:-math.ceil(scale)]):
+            b=numpy.append(b, (1-(a%1))*beatmap[math.floor(a)]+(a%1)*beatmap[math.ceil(a)])
+            a+=scale
+    return b
+
+def beatmap_autoinsert(beatmap):
+    import numpy
+    diff=(beatmap[1]-beatmap[0])
+    while diff<beatmap[0]:
+        beatmap=numpy.insert(beatmap, 0, beatmap[0]-diff)
+    return beatmap
+
+def beatmap_shift(beatmap, shift):
+    if shift>0:
+        for i in range(len(beatmap)-1):
+            beatmap[i] = beatmap[i] + shift * (beatmap[i+1] - beatmap[i])
+    elif shift<0:
+        for i in reversed(range(len(beatmap)-1)):
+            beatmap[i+1] = beatmap[i+1] - shift * (beatmap[i] - beatmap[i+1])
+    return beatmap
+
+def beatmap_trim(beatmap, samplerate, start=0, end=None):
+    start*=samplerate
+    beatmap=beatmap[beatmap>=start].astype(int)
+    if end is not None: beatmap=beatmap[beatmap<=end].astype(int)
+    return beatmap
+
+def beatswap(audio, beatmap, pattern, sep=',', smoothing=40, smoothing_mode='replace'):
+    import math, numpy
     # get pattern size
     size=0    
     #cut processing??? not worth it, it is really fast anyways
@@ -153,33 +164,8 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
         if s=='': s='0'
         size=max(size, eval(s))
 
-    # scale beatmap
-    if scale!=1:
-        a=0
-        b=numpy.array([])
-        while a <len( beatmap[:-math.ceil(scale)]):
-            b=numpy.append(b, (1-(a%1))*beatmap[math.floor(a)]+(a%1)*beatmap[math.ceil(a)])
-            a+=scale
-        beatmap = b
-    
-    # autoinsert beats to the beginning
-    if autoinsert is True:
-        while diff<beatmap[0]:
-            beatmap=numpy.insert(beatmap, 0, beatmap[0]-diff)
-
-    # shift (doesn't really work)
-    if shift>0 and shift%1==0:
-        for i in range(shift): beatmap=numpy.insert(beatmap, 0, i+2)
-    elif shift!=0:
-        for i in range(int(16-float(shift))): beatmap=numpy.insert(beatmap, 0, i+2)
-    #beatmap=numpy.insert(beatmap,0,0)
-
-    # apply start and end time
-    start*=samplerate
-    beatmap=beatmap[beatmap>=start].astype(int)
-    if end!=None: beatmap=beatmap[beatmap<=end].astype(int)
-
     if isinstance(audio,numpy.ndarray): audio=numpy.ndarray.tolist(audio)
+    if beatmap.dtype!='int32': beatmap=beatmap.astype(int)
 
     #beat=[]
     #start=audio[:beatmap[0]]
@@ -189,15 +175,11 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
 
     # audio is a tuple with l and r channels
     #print(len(audio))
-    if len(audio)>1: 
-        audio=(audio[0], audio[1])
-        #print(beatmap[0], audio[0][100])
-        result=(audio[0][:beatmap[0]],audio[1][:beatmap[0]])
-        beat=numpy.asarray([[],[]])
-    else: 
-        audio=(audio[0])
-        result=(audio[0][:beatmap[0]])
-        beat=numpy.asarray[[]]
+
+    audio=(audio[0], audio[1])
+    #print(beatmap[0], audio[0][100])
+    result=(audio[0][:beatmap[0]],audio[1][:beatmap[0]])
+    beat=numpy.asarray([[],[]])
 
     # size, iterations are integers
     size=int(max(size//1, 1))
@@ -280,13 +262,9 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
                             if z=='': z='2'
                             z=eval(z)
                             if z<1: 
-                                if len(beat) >1:
-                                    beat=numpy.asarray((numpy.repeat(beat[0],int(1//z)),numpy.repeat(beat[1],int(1//z))))
-                                else: beat=numpy.asarray((numpy.repeat(beat, int(1//z))))
+                                beat=numpy.asarray((numpy.repeat(beat[0],int(1//z)),numpy.repeat(beat[1],int(1//z))))
                             else:
-                                if len(beat) >1:
-                                    beat=numpy.asarray((beat[0,::int(z)],beat[1,::int(z)]))
-                                else: beat=numpy.asarray(beat[0,::int(z)])
+                                beat=numpy.asarray((beat[0,::int(z)],beat[1,::int(z)]))
                         
                         # bitcrush
                         z=beatswap_getnum(i,'b')
@@ -302,9 +280,7 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
                         if z is not None:
                             if z=='': z='3'
                             z=int(eval(z))
-                            if len(beat) >1:
-                                beat=numpy.asarray((numpy.repeat(beat[0,::z],z),numpy.repeat(beat[1,::z],z)))
-                            else: beat=numpy.asarray((numpy.repeat(beat[::z], z)))
+                            beat=numpy.asarray((numpy.repeat(beat[0,::z],z),numpy.repeat(beat[1,::z],z)))
 
                         # convert to list
                         beat=beat.tolist()
@@ -312,9 +288,7 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
                         # effects with list
                         # reverse
                         if ('r' in i and reverse is False) or (reverse is True and 'r' not in i):
-                            if len(beat) >1:
-                                beat=(beat[0][::-1],beat[1][::-1] )
-                            else:beat=(beat[::-1])
+                            beat=(beat[0][::-1],beat[1][::-1] )
 
                         # add beat to the result
                         for a in range(len(audio)): 
@@ -328,11 +302,64 @@ def beatswap(filename=None, pattern=None, output='', scale=1.0, shift=0, start=0
                         #   
                         break
     #print(time.process_time() - benchmark)
-    
-    # create output
-    if output is not None:
-        if (not output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg')) and filename is not None: output=output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+'_bm.mp3'
-        elif (not output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg')) =='': output=output+'BeatManipulator_output.mp3'
 
-    if output is not None: write_audio(result, output, samplerate)
-    else: return result
+    return result
+
+def beatsample(audio, audio2, beatmap, shift=0):
+    l=len(audio2[0,:])
+    for i in range(len(beatmap)):
+        try: audio[:,int(beatmap[i]) + int(float(shift) * (int(beatmap[i+1])-int(beatmap[i]))) : int(beatmap[i])+int(float(shift) * (int(beatmap[i+1])-int(beatmap[i])))+int(l)]+=audio2
+        except (IndexError, ValueError): pass
+    return audio
+
+def sidechain_gen(samplerate=44100, len=0.5, curve=2, start=0, end=1):
+    import numpy
+    x=numpy.linspace(start,end,int(len*samplerate))**curve
+    return(x,x)
+
+def sidechain(audio, audio2, beatmap, shift=0):
+    # add the sound
+    l=len(audio2[0])
+    for i in range(len(beatmap)):
+        try: audio[:,int(beatmap[i]) + int(float(shift) * (int(beatmap[i+1])-int(beatmap[i]))) : int(beatmap[i])+int(float(shift) * (int(beatmap[i+1])-int(beatmap[i])))+int(l)]*=audio2
+        except (IndexError, ValueError): pass
+    return audio
+
+def outputfilename(output, filename, suffix='_beatswap'):
+    return output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'mp3'
+
+def wrapper_beatswap(output='', filename=None, pattern=None, scale=1, shift=0, start=0, end=None, audio=None, samplerate=None, beatmap=None, autotrim=True, autoscale=False, autoinsert=True, suffix='_BeatSwap'):
+    
+    if filename is None:
+        from tkinter.filedialog import askopenfilename
+        filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
+
+    filename=filename.replace('\\', '/')
+
+    if audio is None or samplerate is None:
+        from pedalboard.io import AudioFile
+        with AudioFile(filename) as f:
+            audio = f.read(f.frames)
+            samplerate = f.samplerate
+
+    if beatmap is None: beatmap=analyze_beats(filename, audio, samplerate)
+
+    if autotrim is True: (audio,beatmap)=audio_autotrim(audio,beatmap)
+
+    if autoscale is True: beatmap=beatmap_autoscale(beatmap)
+
+    if scale!=1: beatmap=beatmap_scale(beatmap, scale)
+
+    if autoinsert is True: beatmap=beatmap_autoinsert(beatmap)
+
+    if shift!=0: beatmap=beatmap_shift(beatmap, shift)
+
+    if start!=0 or end is not None: beatmap=beatmap_trim(beatmap, samplerate, start, end)
+
+    audio=beatswap(audio, beatmap, pattern)
+
+    if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
+    output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
+        output=output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+
+    write_audio(audio, samplerate, output)
