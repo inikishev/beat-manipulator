@@ -1,5 +1,5 @@
 ## dpe's beat manipulator
-Advanced beat swapping powered by madmom https://github.com/CPJKU/madmom
+Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 
 # Basic how to use
 BeatManipulator.py is the only file you need. Put it next to your .py file so that you can import it (if it errors also put ffmpeg.exe next to it). Copy the following into your .py:
