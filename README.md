@@ -42,6 +42,6 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 `bm.wrapper_sidechain(filename=None, audio2=None, scale=1, shift=0, start=0, end=None, audio=None)` - puts sidechain (fade in) on each beat. Audio2 is the sidechain impulse, if not specified, it will be generated. Or you can manually generate it with `bm.sidechain_gen(samplerate=44100, len=0.5, curve=2, vol0=0, vol1=1)`. This one will be 0.5 seconds 0-1 fade in, with a minor curve.
 
 # Notes
-- libraries used - `madmom` for BPM detection, `pedalboard.io` for import/export, `numpy` for some effects.
+- libraries used - `madmom` for beat detection, `librosa` and `pedalboard.io` for import/export, `numpy` for some effects
 - this was coded by Big ounce, gort and Quandale dingle
 - will work on python 3.9, maybe lower, not higher because of madmom, also if it doesn't work download and put ffmpeg.exe next to your .py file
