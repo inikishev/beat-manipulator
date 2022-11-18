@@ -37,7 +37,9 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - you can combine stuff like `0:1/3d8v2cr` - that line means 0:1/3 beat will be downsampled, 200% volume, swapped channels, and reversed
 
 ### Other
-There are also functions to play a sound every x beats or to sidechain every x beats, soon
+`bm.wrapper_beatsample(filename=None, filename2=None, scale=1, shift=0, start=0, end=None, audio=None)` - puts a filename2 (or audio2) sample on each beat.
+
+`bm.wrapper_sidechain(filename=None, audio2=None, scale=1, shift=0, start=0, end=None, audio=None)` - puts sidechain (fade in) on each beat. Audio2 is the sidechain impulse, if not specified, it will be generated. Or you can manually generate it with `bm.sidechain_gen(samplerate=44100, len=0.5, curve=2, vol0=0, vol1=1)`. This one will be 0.5 seconds 0-1 fade in, with a minor curve.
 
 # Notes
 - libraries used - `madmom` for BPM detection, `pedalboard.io` for import/export, `numpy` for most effects including beatswapping.
