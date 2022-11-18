@@ -97,7 +97,7 @@ def audio_autotrim(audio,beatmap=None):
     else: return audio
 
 
-def beatmap_autoscale(beatmap):
+def scale_autoscale(beatmap, scale):
     bpm=(beatmap[-1]-beatmap[0])/(len(beatmap)-1)
     #print('BPM =', (bpm/samplerate) * 240, bpm)
     if bpm>=160000: scale/=8
@@ -106,7 +106,7 @@ def beatmap_autoscale(beatmap):
     elif (bpm)<=20000: scale*=2
     elif (bpm)<=10000: scale*=4
     elif (bpm)<=5000: scale*=8
-    return beatmap
+    return scale
 
 
 # add beat to the end
@@ -312,17 +312,17 @@ def beatsample(audio, audio2, beatmap, shift=0):
         except (IndexError, ValueError): pass
     return audio
 
-def sidechain_gen(samplerate=44100, len=0.5, curve=2, start=0, end=1):
+def sidechain_gen(samplerate=44100, len=0.5, curve=2, start=0, end=1, smoothing=40):
     import numpy
-    x=numpy.linspace(start,end,int(len*samplerate))**curve
+    x=numpy.concaterate((numpy.linspace(1,0,smoothing),numpy.linspace(start,end,int(len*samplerate))**curve))
     return(x,x)
 
-def sidechain(audio, audio2, beatmap, shift=0):
+def sidechain(audio, audio2, beatmap, shift=0, smoothing=40):
     # add the sound
     l=len(audio2[0])
     for i in range(len(beatmap)):
-        try: audio[:,int(beatmap[i]) + int(float(shift) * (int(beatmap[i+1])-int(beatmap[i]))) : int(beatmap[i])+int(float(shift) * (int(beatmap[i+1])-int(beatmap[i])))+int(l)]*=audio2
-        except (IndexError, ValueError): pass
+        try: audio[:,int(beatmap[i])-smoothing + int(float(shift) * (int(beatmap[i+1])-int(beatmap[i]))) : int(beatmap[i])-smoothing+int(float(shift) * (int(beatmap[i+1])-int(beatmap[i])))+int(l)]*=audio2
+        except (IndexError, ValueError): break
     return audio
 
 def outputfilename(output, filename, suffix='_beatswap'):
@@ -346,7 +346,7 @@ def wrapper_beatswap(output='', filename=None, pattern=None, scale=1, shift=0, s
 
     if autotrim is True: (audio,beatmap)=audio_autotrim(audio,beatmap)
 
-    if autoscale is True: beatmap=beatmap_autoscale(beatmap)
+    if autoscale is True: scale=scale_autoscale(beatmap, scale)
 
     if scale!=1: beatmap=beatmap_scale(beatmap, scale)
 
@@ -358,8 +358,109 @@ def wrapper_beatswap(output='', filename=None, pattern=None, scale=1, shift=0, s
 
     audio=beatswap(audio, beatmap, pattern)
 
-    if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
-    output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-        output=output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+    if output is not None:
+        if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
+        output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
+            output=output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
 
-    write_audio(audio, samplerate, output)
+        write_audio(audio, samplerate, output)
+    else: return audio
+
+def wrapper_sidechain(output='', filename=None, audio2=None, scale=1, shift=0, start=0, end=None, audio=None, samplerate=None, beatmap=None, autotrim=True, autoscale=False, autoinsert=True, filename2=None, suffix='_Sidechain'):
+    
+    if filename is None:
+        from tkinter.filedialog import askopenfilename
+        filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
+
+    # if filename2 is None and audio2 is None:
+    #     from tkinter.filedialog import askopenfilename
+    #     filename2 = askopenfilename(title='select sidechain impulse', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
+
+    if filename2 is None and audio2 is None:
+        audio2=sidechain_gen()
+
+    filename=filename.replace('\\', '/')
+
+    if audio is None or samplerate is None:
+        from pedalboard.io import AudioFile
+        with AudioFile(filename) as f:
+            audio = f.read(f.frames)
+            samplerate = f.samplerate
+    
+    if audio2 is None:
+        from pedalboard.io import AudioFile
+        with AudioFile(filename2) as f:
+            audio2 = f.read(f.frames)
+            #samplerate2 = f.samplerate
+
+    if beatmap is None: beatmap=analyze_beats(filename, audio, samplerate)
+
+    if autotrim is True: (audio,beatmap)=audio_autotrim(audio,beatmap)
+
+    if autoscale is True: scale=scale_autoscale(beatmap, scale)
+
+    if scale!=1: beatmap=beatmap_scale(beatmap, scale)
+
+    if autoinsert is True: beatmap=beatmap_autoinsert(beatmap)
+
+    if shift!=0: beatmap=beatmap_shift(beatmap, shift)
+
+    if start!=0 or end is not None: beatmap=beatmap_trim(beatmap, samplerate, start, end)
+
+    audio=sidechain(audio, audio2, beatmap)
+
+    if output is not None:
+        if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
+        output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
+            output=output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+
+        write_audio(audio, samplerate, output)
+    else: return audio
+
+def wrapper_beatsample(output='', filename=None, audio2=None, scale=1, shift=0, start=0, end=None, audio=None, samplerate=None, beatmap=None, autotrim=True, autoscale=False, autoinsert=True, filename2=None, suffix='_BeatSample'):
+    
+    if filename is None:
+        from tkinter.filedialog import askopenfilename
+        filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
+
+    if filename2 is None and audio2 is None:
+        from tkinter.filedialog import askopenfilename
+        filename2 = askopenfilename(title='select sidechain impulse', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
+
+    filename=filename.replace('\\', '/')
+
+    if audio is None or samplerate is None:
+        from pedalboard.io import AudioFile
+        with AudioFile(filename) as f:
+            audio = f.read(f.frames)
+            samplerate = f.samplerate
+    
+    if audio2 is None:
+        from pedalboard.io import AudioFile
+        with AudioFile(filename2) as f:
+            audio2 = f.read(f.frames)
+            #samplerate2 = f.samplerate
+
+    if beatmap is None: beatmap=analyze_beats(filename, audio, samplerate)
+
+    if autotrim is True: (audio,beatmap)=audio_autotrim(audio,beatmap)
+
+    if autoscale is True: scale=scale_autoscale(beatmap, scale)
+
+    if scale!=1: beatmap=beatmap_scale(beatmap, scale)
+
+    if autoinsert is True: beatmap=beatmap_autoinsert(beatmap)
+
+    if shift!=0: beatmap=beatmap_shift(beatmap, shift)
+
+    if start!=0 or end is not None: beatmap=beatmap_trim(beatmap, samplerate, start, end)
+
+    audio=beatsample(audio, audio2, beatmap)
+
+    if output is not None:
+        if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
+        output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
+            output=output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+
+        write_audio(audio, samplerate, output)
+    else: return audio
