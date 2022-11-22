@@ -45,7 +45,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 
 `song.quick_sidechain(output='', audio2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False)` - puts fake sidechain (fade in) on each beat. audio2 (or filename2) is the sidechain impulse, if not specified, it will be generated. Or you can manually generate it with `bm.generate_sidechain(samplerate=44100, len=0.5, curve=2, vol0=0, vol1=1)`. This one will be 0.5 seconds, 0% -> 100% volume fade in, with a minor curve.
 
-`song.write_audio(output, lib='pedalboard.io')` - writes the audio. Make sure output ends with `.mp3` or `.wav`.
+`song.write_audio(output, lib='pedalboard.io')` - writes the audio. This one doesn't automatically generate an output string, so make sure output ends with `.mp3` or `.wav`.
 
 There is more stuff. I will write how to use that later
 
