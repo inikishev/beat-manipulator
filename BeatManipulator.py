@@ -114,8 +114,9 @@ class song:
             import hashlib
             with open(self.filename, "rb") as f:
                 file_hash = hashlib.blake2b()
-                while chunk := f.read(8192):
-                    file_hash.update(chunk)
+                chunk=f.read(8192)
+                while chunk is True: 
+                    chunk = f.read(8192)
             import os
             if not os.path.exists('SavedBeatmaps'):
                 os.mkdir('SavedBeatmaps')
