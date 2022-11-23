@@ -32,8 +32,8 @@ def open_audio(filename=None, lib='auto'):
             try: 
                 audio,samplerate=open_audio(filename, i)
                 break
-            except ValueError:
-                pass
+            except Exception as e:
+                print(e)
     if len(audio)<2: audio=[audio,audio]
     return audio,samplerate
 
@@ -86,8 +86,8 @@ class song:
                 try: 
                     song.write_audio(self, output, i)
                     break
-                except ValueError:
-                    pass
+                except Exception as e:
+                    print(e)
 
         # elif lib=='pydub':
         #     from pydub import AudioSegment
