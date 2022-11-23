@@ -1,8 +1,14 @@
-## dpe's beat manipulator
 Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 
+# Requirements
+- tested on python 3.7, 3.8, 3.9. Will probably work on higher versions, however I couldn't install madmom on them.
+- packages: `numpy`, `madmom`, `ffmpeg-python`, `soundfile`, `pedalboard`.
+- if you get file not found error, put ffmpeg.exe next to your .py file - https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip
+
+Quick commands to install those packages at the bottom.
+
 # Basic how to use
-BeatManipulator.py is the only file you need. Put it next to your .py file so that you can import it (if it errors also put ffmpeg.exe next to it). Copy the following into your .py:
+BeatManipulator.py is the only file you need. Put it next to your .py file so that you can import it. Copy the following into your .py:
 ```
 import BeatManipulator as bm
 song=bm.song() # open a song
@@ -53,3 +59,14 @@ There is more stuff. I will write how to use that later
 - libraries used - `madmom` for beat detection, `librosa` and `pedalboard.io` for import/export, `numpy` for some effects
 - this was coded by Big ounce, gort and Quandale dingle
 - will work on python 3.9 and 3.8, maybe lower. It should work on higher versions as well, but madmom doesn't.
+
+# Installing requirements
+### pip
+- `pip install numpy cython soundfile ffmpeg-python pedalboard`
+- `pip install madmom`
+### conda
+- you need conda forge channel: `conda config --append channels conda-forge`
+- some requirements are pip only, so you might want to create a new environment
+- `conda install pip cython mido numpy scipy soundfile ffmpeg`
+- `pip install madmom pedalboard`
+- You will have exactly 2 pip packages, madmom and pedalboard, all dependencies will be from conda.
