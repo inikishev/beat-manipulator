@@ -64,7 +64,7 @@ class song:
             self.filename=filename
             if audio is None or samplerate is None:
                 self.audio, self.samplerate=open_audio(self.filename)
-            self.beatmap=beatmap
+        self.beatmap=beatmap
         self.filename=self.filename.replace('\\', '/')
         self.samplerate=int(self.samplerate)
     
@@ -111,19 +111,15 @@ class song:
     def analyze_beats(self, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
         #if audio is None and filename is None: (audio, samplerate) = open_audio()
         if caching is True:
-            import hashlib
-            with open(self.filename, "rb") as f:
-                file_hash = hashlib.blake2b()
-                chunk=f.read(8192)
-                while chunk is True: 
-                    chunk = f.read(8192)
+            id=hex(len(self.audio[0]))
             import os
             if not os.path.exists('SavedBeatmaps'):
                 os.mkdir('SavedBeatmaps')
-            cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + lib+"_"+file_hash.hexdigest()[:5]+'.txt'
+            cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + lib+"_"+id+'.txt'
             try: 
                 self.beatmap=numpy.loadtxt(cacheDir, dtype=int)
-                return numpy.loadtxt(cacheDir, dtype=int)
+                self.bpm=numpy.median(self.beatmap)/self.samplerate
+                return
             except OSError: pass
 
         if lib.split('.')[0]=='madmom':
@@ -213,6 +209,7 @@ class song:
             self.beatmap=numpy.absolute(self.beatmap-500)
             
         if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int))
+        self.bpm=numpy.median(self.beatmap)/self.samplerate
 
     def audio_autotrim(self):
         n=0
@@ -453,7 +450,6 @@ class song:
             except (IndexError, ValueError): break
 
     def quick_beatswap(self, output='', pattern=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False, suffix='_BeatSwap', lib='madmom.BeatDetectionProcessor'):
-        
         if self.beatmap is None: song.analyze_beats(self,lib=lib)
         if autotrim is True: song.audio_autotrim(self)
         save=self.beatmap
