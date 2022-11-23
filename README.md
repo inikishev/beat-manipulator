@@ -1,7 +1,7 @@
 Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 
 # Requirements
-- tested on python 3.7, 3.8, 3.9. Will probably work on higher versions, however I couldn't install madmom on them.
+- tested on python 3.9 and 3.8. Will probably work on higher versions, however I couldn't install madmom on them.
 - packages: `numpy`, `madmom`, `ffmpeg-python`, `soundfile`, `pedalboard`
 - if you get file not found error, put ffmpeg.exe next to your .py file - https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip
 
