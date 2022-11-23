@@ -1,4 +1,7 @@
 import numpy
+numpy.set_printoptions(suppress=True,
+   formatter={'all':'{:0.5f}'.format})
+
 def open_audio(filename=None, lib='auto'):
     if filename is None:
         from tkinter.filedialog import askopenfilename
@@ -208,7 +211,7 @@ class song:
         if lib.split('.')[0]=='madmom':
             self.beatmap=numpy.absolute(self.beatmap-500)
             
-        if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='% 1d')
+        if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='%d')
         self.bpm=numpy.median(self.beatmap)/self.samplerate
 
     def audio_autotrim(self):
