@@ -1,3 +1,4 @@
+import numpy
 def open_audio(filename=None, lib='auto'):
     if filename is None:
         from tkinter.filedialog import askopenfilename
@@ -11,6 +12,14 @@ def open_audio(filename=None, lib='auto'):
     elif lib=='librosa':
         import librosa
         audio, samplerate = librosa.load(filename, sr=None, mono=False)
+    elif lib=='soundfile':
+        import soundfile
+        audio, samplerate = soundfile.read(filename)
+        audio=audio.T
+    elif lib=='madmom':
+        import madmom
+        audio, samplerate = madmom.io.audio.load_audio_file(filename, dtype=float)
+        audio=audio.T
     # elif lib=='pydub':
     #     from pydub import AudioSegment
     #     song=AudioSegment.from_file(filename)
@@ -19,19 +28,17 @@ def open_audio(filename=None, lib='auto'):
     #     print(audio)
     #     print(filename)
     elif lib=='auto':
-        try:
-            from pedalboard.io import AudioFile
-            with AudioFile(filename) as f:
-                audio = f.read(f.frames)
-                samplerate = f.samplerate
-        except:
-            import librosa
-            audio, samplerate = librosa.load(filename, sr=None, mono=False)
+        for i in ('madmom', 'soundfile', 'librosa', 'pedalboard.io'):
+            try: 
+                audio,samplerate=open_audio(filename, i)
+                break
+            except ValueError:
+                pass
+    if len(audio)<2: audio=[audio,audio]
     return audio,samplerate
 
 
 def generate_sidechain(samplerate=44100, len=0.5, curve=2, vol0=0, vol1=1, smoothing=40):
-    import numpy
     x=numpy.concaterate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(len*samplerate))**curve))
     return(x,x)
 
@@ -39,15 +46,12 @@ def outputfilename(output, filename, suffix='_beatswap'):
     return output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
 
 def generate_sine(len, freq, samplerate, volume=1):
-    import numpy
     return numpy.sin(numpy.linspace(0, freq*3.1415926*2*len, int(len*samplerate)))*volume
 
 def generate_saw(len, freq, samplerate, volume=1):
-    import numpy
     return (numpy.linspace(0, freq*2*len, int(len*samplerate))%2 - 1)*volume
 
 def generate_square(len, freq, samplerate, volume=1):
-    import numpy
     return ((numpy.linspace(0, freq*2*len, int(len*samplerate)))//1%2 * 2 - 1)*volume
 
 class song:
@@ -62,15 +66,29 @@ class song:
                 self.audio, self.samplerate=open_audio(self.filename)
             self.beatmap=beatmap
         self.filename=self.filename.replace('\\', '/')
+        self.samplerate=int(self.samplerate)
     
-    def write_audio(self, output:str, lib='pedalboard.io'):
+    def write_audio(self, output:str, lib='auto'):
         if lib=='pedalboard.io':
-            import numpy
             if not isinstance(self.audio,numpy.ndarray): self.audio=numpy.asarray(self.audio)
             #print(audio)
             from pedalboard.io import AudioFile
             with AudioFile(output, 'w', self.samplerate, self.audio.shape[0]) as f:
                 f.write(self.audio)
+        elif lib=='soundfile':
+            if not isinstance(self.audio,numpy.ndarray): self.audio=numpy.asarray(self.audio)
+            audio=self.audio.T
+            import soundfile
+            soundfile.write(output, audio, self.samplerate)
+            del audio
+        elif lib=='auto':
+            for i in ('pedalboard.io', 'soundfile'):
+                try: 
+                    song.write_audio(self, output, i)
+                    break
+                except ValueError:
+                    pass
+
         # elif lib=='pydub':
         #     from pydub import AudioSegment
         #     song = AudioSegment(self.audio.tobytes(), frame_rate=self.samplerate, sample_width=2, channels=2)
@@ -81,7 +99,7 @@ class song:
         #     song.export(output, format=format)
 
     def beatmap_scale(self, scale:float):
-        import numpy, math
+        import math
         if scale!=1:
             a=0
             b=numpy.array([])
@@ -101,7 +119,6 @@ class song:
             import os
             if not os.path.exists('SavedBeatmaps'):
                 os.mkdir('SavedBeatmaps')
-            import numpy
             cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + lib+"_"+file_hash.hexdigest()[:5]+'.txt'
             try: 
                 self.beatmap=numpy.loadtxt(cacheDir, dtype=int)
@@ -111,51 +128,50 @@ class song:
         if lib.split('.')[0]=='madmom':
             from collections.abc import MutableMapping, MutableSequence
             import madmom
-
         if lib=='madmom.BeatTrackingProcessor':
             proc = madmom.features.beats.BeatTrackingProcessor(fps=100)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         if lib=='madmom.BeatTrackingProcessor.constant':
             proc = madmom.features.beats.BeatTrackingProcessor(fps=100, look_ahead=None)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         if lib=='madmom.BeatTrackingProcessor.consistent':
             proc = madmom.features.beats.BeatTrackingProcessor(fps=100, look_ahead=None, look_aside=0)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.BeatDetectionProcessor':
             proc = madmom.features.beats.BeatDetectionProcessor(fps=100)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.BeatDetectionProcessor.consistent':
             proc = madmom.features.beats.BeatDetectionProcessor(fps=100, look_aside=0)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.CRFBeatDetectionProcessor':
             proc = madmom.features.beats.CRFBeatDetectionProcessor(fps=100)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.CRFBeatDetectionProcessor.constant':
             proc = madmom.features.beats.CRFBeatDetectionProcessor(fps=100, use_factors=True, factors=[0.5, 1, 2])
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.DBNBeatTrackingProcessor':
             proc = madmom.features.beats.DBNBeatTrackingProcessor(fps=100)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.DBNBeatTrackingProcessor.1000':
             proc = madmom.features.beats.DBNBeatTrackingProcessor(fps=100, transition_lambda=1000)
-            act = madmom.features.beats.RNNBeatProcessor()(self.filename)
+            act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='madmom.MultiModelSelectionProcessor': #broken
             proc = madmom.features.beats.RNNBeatProcessor(post_processor=None)
-            predictions = proc(self.filename)
+            predictions = proc(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             mm_proc = madmom.features.beats.MultiModelSelectionProcessor(num_ref_predictions=None)
             self.beatmap= numpy.sort(mm_proc(predictions)*self.samplerate)
         elif lib=='madmom.DBNDownBeatTrackingProcessor':
             proc = madmom.features.downbeats.DBNDownBeatTrackingProcessor(beats_per_bar=[4], fps=100)
-            act = madmom.features.downbeats.RNNDownBeatProcessor()(self.filename)
+            act = madmom.features.downbeats.RNNDownBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
             self.beatmap=self.beatmap[:,0]
         elif lib=='madmom.PatternTrackingProcessor': #broken
@@ -167,13 +183,13 @@ class song:
             diff = SpectrogramDifferenceProcessor(positive_diffs=True)
             mb = MultiBandSpectrogramProcessor(crossover_frequencies=[270])
             pre_proc = SequentialProcessor([log, diff, mb])
-            act = pre_proc(self.audio[0])
+            act = pre_proc(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
             self.beatmap=self.beatmap[:,0]
         elif lib=='madmom.DBNBarTrackingProcessor': #broken
             beats = song.analyze_beats(self,lib='madmom.DBNBeatTrackingProcessor', caching = caching)
             proc = madmom.features.downbeats.DBNBarTrackingProcessor(beats_per_bar=[4], fps=100)
-            act = madmom.features.downbeats.RNNBarProcessor()((self.audio, beats))
+            act = madmom.features.downbeats.RNNBarProcessor()(((madmom.audio.signal.Signal(self.audio.T, self.samplerate)), beats))
             self.beatmap= proc(act)*self.samplerate
         elif lib=='librosa': #broken in 3.9, works in 3.8
             import librosa
@@ -192,11 +208,12 @@ class song:
 
         elif lib=='split':
             self.beatmap= list(range(0, len(self.audio), len(self.audio)//split))
+        if lib.split('.')[0]=='madmom':
+            self.beatmap=numpy.absolute(self.beatmap-500)
             
         if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int))
 
     def audio_autotrim(self):
-        import numpy
         n=0
         for i in self.audio[0]:
             if i>=0.0001:break
@@ -220,7 +237,6 @@ class song:
         song.beatmap_scale(self,scale)        
 
     def beatmap_autoinsert(self):
-        import numpy
         diff=(self.beatmap[1]-self.beatmap[0])
         while diff<self.beatmap[0]:
             self.beatmap=numpy.insert(self.beatmap, 0, self.beatmap[0]-diff)
@@ -421,7 +437,6 @@ class song:
         try: l=len(audio2[0])
         except (TypeError, IndexError): 
             l=len(audio2)
-            import numpy
             audio2=numpy.vstack((audio2,audio2))
         for i in range(len(self.beatmap)):
             try: self.audio[:,int(self.beatmap[i]) + int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i]))) : int(self.beatmap[i])+int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i])))+int(l)]+=audio2
@@ -431,7 +446,6 @@ class song:
         try: l=len(audio2[0])
         except (TypeError, IndexError): 
             l=len(audio2)
-            import numpy
             audio2=numpy.vstack((audio2,audio2))
         for i in range(len(self.beatmap)):
             try: self.audio[:,int(self.beatmap[i])-smoothing + int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i]))) : int(self.beatmap[i])-smoothing+int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i])))+int(l)]*=audio2
@@ -485,7 +499,6 @@ class song:
         self.beatmap=save
 
     def quick_beatsample(self, output='', filename2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False, audio2=None, suffix='_BeatSample', lib='madmom.BeatDetectionProcessor'):
-        import numpy
         if filename2 is None and audio2 is None:
             from tkinter.filedialog import askopenfilename
             filename2 = askopenfilename(title='select sidechain impulse', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
