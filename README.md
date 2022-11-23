@@ -2,7 +2,7 @@ Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 
 # Requirements
 - tested on python 3.7, 3.8, 3.9. Will probably work on higher versions, however I couldn't install madmom on them.
-- packages: `numpy`, `madmom`, `ffmpeg-python`, `soundfile`, `pedalboard`.
+- packages: `numpy`, `madmom`, `ffmpeg-python`, `soundfile`, `pedalboard`, `hashlib` for caching beatmaps.
 - if you get file not found error, put ffmpeg.exe next to your .py file - https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip
 
 Quick commands to install those packages at the bottom.
@@ -67,6 +67,6 @@ There is more stuff. I will write how to use that later
 ### conda
 - you need conda forge channel: `conda config --append channels conda-forge`
 - some requirements are pip only, so you might want to create a new environment
-- `conda install pip cython mido numpy scipy soundfile ffmpeg`
+- `conda install pip cython mido numpy scipy soundfile ffmpeg hashlib`
 - `pip install madmom pedalboard`
 - You will have exactly 2 pip packages, madmom and pedalboard, all dependencies will be from conda.
