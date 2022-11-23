@@ -208,7 +208,7 @@ class song:
         if lib.split('.')[0]=='madmom':
             self.beatmap=numpy.absolute(self.beatmap-500)
             
-        if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int))
+        if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='% 1d')
         self.bpm=numpy.median(self.beatmap)/self.samplerate
 
     def audio_autotrim(self):
