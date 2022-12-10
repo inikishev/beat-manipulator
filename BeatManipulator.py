@@ -1,6 +1,5 @@
 import numpy
-numpy.set_printoptions(suppress=True,
-   formatter={'all':'{:0.5f}'.format})
+numpy.set_printoptions(suppress=True)
 
 def open_audio(filename=None, lib='auto'):
     if filename is None:
@@ -41,12 +40,15 @@ def open_audio(filename=None, lib='auto'):
     return audio,samplerate
 
 
-def generate_sidechain(samplerate=44100, len=0.5, curve=2, vol0=0, vol1=1, smoothing=40):
-    x=numpy.concaterate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(len*samplerate))**curve))
+def generate_sidechain(samplerate=44100, length=0.5, curve=2, vol0=0, vol1=1, smoothing=40) ->numpy.array:
+    x=numpy.concaterate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(length*samplerate))**curve))
     return(x,x)
 
 def outputfilename(output, filename, suffix='_beatswap'):
-    return output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+    if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
+            output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
+                return output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+    
 
 def generate_sine(len, freq, samplerate, volume=1):
     return numpy.sin(numpy.linspace(0, freq*3.1415926*2*len, int(len*samplerate)))*volume
@@ -58,7 +60,8 @@ def generate_square(len, freq, samplerate, volume=1):
     return ((numpy.linspace(0, freq*2*len, int(len*samplerate)))//1%2 * 2 - 1)*volume
 
 class song:
-    def __init__(self, filename=None, audio=None, samplerate=None, beatmap=None):
+    def __init__(self, filename:str=None, audio:numpy.array=None, samplerate:int=None, beatmap:list=None):
+        """song can be loaded from path to an audio file, or from a list/numpy array and samplerate. Audio array should have values from -1 to 1, multiple channels should be stacked vertically. Optionally you can provide your own beat map."""
         if filename is None:
             from tkinter.filedialog import askopenfilename
             self.filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
@@ -67,11 +70,13 @@ class song:
             self.filename=filename
             if audio is None or samplerate is None:
                 self.audio, self.samplerate=open_audio(self.filename)
+            else: self.audio, self.samplerate = audio, samplerate
         self.beatmap=beatmap
         self.filename=self.filename.replace('\\', '/')
         self.samplerate=int(self.samplerate)
     
-    def write_audio(self, output:str, lib='auto'):
+    def write_audio(self, output:str, lib:str='auto'):
+        """"writes audio"""
         if lib=='pedalboard.io':
             if not isinstance(self.audio,numpy.ndarray): self.audio=numpy.asarray(self.audio)
             #print(audio)
@@ -121,7 +126,7 @@ class song:
             cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + lib+"_"+id+'.txt'
             try: 
                 self.beatmap=numpy.loadtxt(cacheDir, dtype=int)
-                self.bpm=numpy.median(self.beatmap)/self.samplerate
+                self.bpm=numpy.average(self.beatmap)/self.samplerate
                 return
             except OSError: pass
 
@@ -212,7 +217,8 @@ class song:
             self.beatmap=numpy.absolute(self.beatmap-500)
             
         if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='%d')
-        self.bpm=numpy.median(self.beatmap)/self.samplerate
+        self.bpm=numpy.average(self.beatmap)/self.samplerate
+        self.beatmap=self.beatmap.astype(int)
 
     def audio_autotrim(self):
         n=0
@@ -269,12 +275,13 @@ class song:
                     if i.isdigit() or i=='.' or i=='-' or i=='/' or i=='+' or i=='%': s=str(s)+str(i)
                     elif i==':':
                         if s=='': s='0'
+                        #print(s, eval(s))
                         size=max(math.ceil(float(eval(s))), size)
                         s=''
                     elif s!='': break
                 if s=='': s='0'
             if s=='': s='0'
-            size=max(size, eval(s))
+            size=max(math.ceil(float(eval(s))), size)
 
         if isinstance(self.audio,numpy.ndarray): self.audio=numpy.ndarray.tolist(self.audio)
         if self.beatmap.dtype!='int32': self.beatmap=self.beatmap.astype(int)
@@ -298,8 +305,34 @@ class song:
         iterations=int(len(self.beatmap)//size)
 
         # add beat to the end
-        self.beatmap=numpy.append(self.beatmap, len(self.audio[0]))
+        self.beatmap=numpy.unique(numpy.abs(numpy.append(self.beatmap, len(self.audio[0]))))
         
+        if 'random' in pattern[0].lower():
+            import random
+            for i in range(len(self.beatmap)):
+                choice=random.randint(1,len(self.beatmap)-1)
+                for a in range(len(self.audio)): 
+                    beat=self.audio[a][self.beatmap[choice-1]:self.beatmap[choice]-smoothing]
+                    if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
+                    result[a].extend(beat)
+            self.audio = result
+            return None
+        
+        if 'reverse' in pattern[0].lower():
+            for a in range(len(self.audio)): 
+                for i in list(reversed(range(len(self.beatmap))))[:-1]:
+                    beat=self.audio[a][self.beatmap[i-1]:self.beatmap[i]-smoothing]
+                    #print(self.beatmap[i-1],self.beatmap[i])
+                    #print(result[a][-1], beat[0])
+                    if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
+                    result[a].extend(beat)
+
+            self.audio = result
+            return None
+                    
+                    #print(len(result[0]))
+
+
         def beatswap_getnum(i: str, c: str):
             if c in i:
                 try: 
@@ -452,7 +485,30 @@ class song:
             try: self.audio[:,int(self.beatmap[i])-smoothing + int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i]))) : int(self.beatmap[i])-smoothing+int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i])))+int(l)]*=audio2
             except (IndexError, ValueError): break
 
-    def quick_beatswap(self, output='', pattern=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False, suffix='_BeatSwap', lib='madmom.BeatDetectionProcessor'):
+    def quick_beatswap(self, output:str='', pattern:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, suffix:str='_BeatSwap', lib:str='madmom.BeatDetectionProcessor'):
+        """Generates beatmap if it isn't generated, applies beatswapping to the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
+        
+        output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
+        
+        pattern: the beatswapping pattern.
+        
+        scale: scales the beatmap, for example if generated beatmap is two times faster than the song you can slow it down by putting 0.5.
+        
+        shift: shifts the beatmap by this amount of unscaled beats
+        
+        start: position in seconds, beats before the position will not be manipulated
+        
+        end: position in seconds, same. Set to None by default.
+        
+        autotrim: trims silence in the beginning for better beat detection, True by default
+        
+        autoscale: scales beats so that they are between 10000 and 20000 samples long. Useful when you are processing a lot of files with similar BPMs, False by default.
+        
+        autoinsert: uses distance between beats and inserts beats at the beginning at that distance if possible. Set to False by default, sometimes it can fix shifted beatmaps and sometimes can add unwanted shift.
+        
+        suffix: suffix that will be appended to the filename
+        
+        lib: beat detection library"""
         if self.beatmap is None: song.analyze_beats(self,lib=lib)
         if autotrim is True: song.audio_autotrim(self)
         save=self.beatmap
@@ -472,8 +528,32 @@ class song:
         self.beatmap=save
 
 
-    def quick_sidechain(self, output='', audio2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False, filename2=None, suffix='_Sidechain', lib='madmom.BeatDetectionProcessor'):
+    def quick_sidechain(self, output:str='', audio2:numpy.array=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, filename2:str=None, suffix:str='_Sidechain', lib:str='madmom.BeatDetectionProcessor'):
+        """Generates beatmap if it isn't generated, applies fake sidechain on each beat to the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
         
+        output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
+        
+        audio2: sidechain impulse, basically a curve that the volume will be multiplied by. By default one will be generated with generate_sidechain()
+        
+        scale: scales the beatmap, for example if generated beatmap is two times faster than the song you can slow it down by putting 0.5.
+        
+        shift: shifts the beatmap by this amount of unscaled beats
+        
+        start: position in seconds, beats before the position will not be manipulated
+        
+        end: position in seconds, same. Set to None by default.
+        
+        autotrim: trims silence in the beginning for better beat detection, True by default
+        
+        autoscale: scales beats so that they are between 10000 and 20000 samples long. Useful when you are processing a lot of files with similar BPMs, False by default.
+        
+        autoinsert: uses distance between beats and inserts beats at the beginning at that distance if possible. Set to False by default, sometimes it can fix shifted beatmaps and sometimes can add unwanted shift.
+        
+        filename2: loads sidechain impulse from the file if audio2 if not specified
+
+        suffix: suffix that will be appended to the filename
+        
+        lib: beat detection library"""
         if filename2 is None and audio2 is None:
             audio2=generate_sidechain()
 
@@ -498,7 +578,30 @@ class song:
         
         self.beatmap=save
 
-    def quick_beatsample(self, output='', filename2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False, audio2=None, suffix='_BeatSample', lib='madmom.BeatDetectionProcessor'):
+    def quick_beatsample(self, output:str='', filename2:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=True, audio2:numpy.array=None, suffix:str='_BeatSample', lib:str='madmom.BeatDetectionProcessor'):
+        """Generates beatmap if it isn't generated, adds chosen sample to each beat of the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
+        
+        output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
+        
+        filename2: path to the sample.
+        
+        scale: scales the beatmap, for example if generated beatmap is two times faster than the song you can slow it down by putting 0.5.
+        
+        shift: shifts the beatmap by this amount of unscaled beats
+        
+        start: position in seconds, beats before the position will not be manipulated
+        
+        end: position in seconds, same. Set to None by default.
+        
+        autotrim: trims silence in the beginning for better beat detection, True by default
+        
+        autoscale: scales beats so that they are between 10000 and 20000 samples long. Useful when you are processing a lot of files with similar BPMs, False by default.
+        
+        autoinsert: uses distance between beats and inserts beats at the beginning at that distance if possible. Set to False by default, sometimes it can fix shifted beatmaps and sometimes can add unwanted shift.
+        
+        suffix: suffix that will be appended to the filename
+        
+        lib: beat detection library"""
         if filename2 is None and audio2 is None:
             from tkinter.filedialog import askopenfilename
             filename2 = askopenfilename(title='select sidechain impulse', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
@@ -523,3 +626,54 @@ class song:
             song.write_audio(self,output)
         self.beatmap=save
         
+    def audio_spectogram(self, hop_length:int=512):
+        self.hop_length=hop_length
+        import librosa
+        self.spectogram=librosa.feature.melspectrogram(y=self.audio, sr=self.samplerate, hop_length=hop_length)
+
+    def spectogram_audio(self):
+        import librosa
+        self.audio=librosa.feature.inverse.mel_to_audio(M=numpy.swapaxes(numpy.swapaxes(numpy.dstack(( self.spectogram[0,:,:],  self.spectogram[1,:,:])), 0, 2), 1,2), sr=self.samplerate, hop_length=self.hop_length)
+
+    def write_image(self):
+        """Turns song into an image based on beat positions. Currently semi-broken"""
+        import cv2
+        audio=self.audio[0].tolist()
+        height=len(audio)/len(self.beatmap)
+        width=len(self.beatmap)
+        height*=3
+        if height>width:
+            increase_length=int(height/width)
+            reduce_width=1
+        else: 
+            reduce_width=int(width/height)
+            increase_length=1
+        increase_length/=10
+        reduce_width*=10
+        image=[audio[0:self.beatmap[0]]]
+        maximum=len(image)
+        for i in range(len(self.beatmap)-1):
+            image.append(audio[self.beatmap[i]:self.beatmap[i+1]])
+            maximum=max(maximum,len(image[i]))
+        for i in range(len(image)):
+            image[i].extend((maximum-len(image[i]))*[0])
+            image[i]=image[i][::reduce_width]
+
+        audio=self.audio[1].tolist()
+        image2=[audio[0:self.beatmap[0]]]
+        for i in range(len(self.beatmap)-1):
+            image2.append(audio[self.beatmap[i]:self.beatmap[i+1]])
+        for i in range(len(image2)):
+            image2[i].extend((maximum-len(image2[i]))*[0])
+            image2[i]=image2[i][::reduce_width]
+            print(len(image[i]), len(image2[i]))
+
+        image=numpy.asarray(image)*255
+        image2=numpy.asarray(image2)*255
+        image3=numpy.add(image, image2)/2
+        image,image2,image3=numpy.repeat(image,increase_length,axis=0),numpy.repeat(image2,increase_length,axis=0),numpy.repeat(image3,increase_length,axis=0)
+        image=cv2.merge([image.T,image2.T, image3.T])
+
+        #image=image.astype('uint8')
+        #image=cv2.resize(image, (0,0), fx=len(image))
+        cv2.imwrite('cv2_output.png', image)
