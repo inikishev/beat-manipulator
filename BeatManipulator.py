@@ -688,7 +688,7 @@ def fix_beatmap(filename, lib='madmom.BeatDetectionProcessor', scale=1, shift=0)
     if not os.path.exists('SavedBeatmaps'):
         os.mkdir('SavedBeatmaps')
     cacheDir="SavedBeatmaps/" + ''.join(track.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
-    a=input(f'Are you sure you want to overwrite {filename} beatmap using scale = {scale}; shift = {shift}? ("n" to cancel)')
+    a=input(f'Are you sure you want to overwrite {cacheDir} using scale = {scale}; shift = {shift}? ("n" to cancel): ')
     if 'n' in a.lower(): return
     else: numpy.savetxt(cacheDir, track.beatmap.astype(int), fmt='%d')
 
@@ -699,6 +699,6 @@ def delete_beatmap(filename, lib='madmom.BeatDetectionProcessor'):
     if not os.path.exists('SavedBeatmaps'):
         os.mkdir('SavedBeatmaps')
     cacheDir="SavedBeatmaps/" + ''.join(track.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
-    a=input(f'Are you sure you want to delete {cacheDir}?')
+    a=input(f'Are you sure you want to delete {cacheDir}? ("n" to cancel): ')
     if 'n' in a.lower(): return
     else: os.remove(cacheDir)

@@ -12,13 +12,13 @@ def lib_test(filename,output='', samplerate=44100, lib='madmom.BeatDetectionProc
     else: 
         song=filename
     song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_sine(0.1, 2000, samplerate), scale=8*scale, shift=0+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_sine(0.05, 1000, samplerate), scale=8*scale, shift=1+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 500, samplerate), scale=8*scale, shift=2+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 250, samplerate), scale=8*scale, shift=3+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 125, samplerate), scale=8*scale, shift=4+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 250, samplerate), scale=8*scale, shift=5+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 500, samplerate), scale=8*scale, shift=6+shift)
-    song.quick_beatsample(output=output, suffix=' ('+lib+')',lib=lib, audio2=bm.generate_saw(0.05, 1000, samplerate), scale=8*scale, shift=7+shift)
+    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_sine(0.05, 1000, samplerate), scale=8*scale, shift=1*scale+shift)
+    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 500, samplerate), scale=8*scale, shift=2*scale+shift)
+    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 250, samplerate), scale=8*scale, shift=3*scale+shift)
+    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 125, samplerate), scale=8*scale, shift=4*scale+shift)
+    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 250, samplerate), scale=8*scale, shift=5*scale+shift)
+    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 500, samplerate), scale=8*scale, shift=6*scale+shift)
+    song.quick_beatsample(output=output, suffix=' ('+lib+')',lib=lib, audio2=bm.generate_saw(0.05, 1000, samplerate), scale=8*scale, shift=7*scale+shift)
     del song
 
 def lib_test_full(filename,samplerate):
@@ -92,15 +92,20 @@ def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, test=T
         use_preset(output, filename, preset=i, presets=presets, scale=scale, shift=shift, test=False)
 
 
+
+# ___ my stuff ___
+
 import random, os
-filename='F:/Stuff/Music/Tracks/STRADEUS - SINNERS x SAINTS.mp3'
+filename='F:/Stuff/Music/Tracks/Camo & Krooked, klei - Dissolve Me.mp3'
 #filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
 
 scale=1
 shift=0
-test=True
-#bm.fix_beatmap(filename, scale=1, shift=0.5)
-#lib_test(filename, scale=1, shift=0)
+test=False
+
+#bm.fix_beatmap(filename, scale=0.5, shift=-0.5)
+lib_test(filename, scale=1, shift=0)
+
 #use_preset ('', filename, 'syncopated', scale=scale, shift=shift, test=test)
 #use_preset ('', filename, None, scale=scale, shift=shift, test=False)
 all('',filename, scale=scale, shift=shift, test=test)
