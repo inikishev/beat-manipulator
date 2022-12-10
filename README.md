@@ -12,7 +12,7 @@ BeatManipulator.py is the only file you need. Put it next to your .py file so th
 ```
 import BeatManipulator as bm
 song=bm.song() # open a song
-song.quick_beatswap(output='', pattern='0, 3, 2, 4', scale=1, shift=0) # beatswap and export
+song.quick_beatswap(output='', pattern='1, 3, 2, 4', scale=1, shift=0) # beatswap and export
 ```
 It will let you pick an audio file, analyze it using madmom, and swap every 2nd and 3rd beats. Analyzing beats for the first time will take some time, but it also saves beatmaps, so opening already analyzed file is much faster.
 
