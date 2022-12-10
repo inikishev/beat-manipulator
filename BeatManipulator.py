@@ -114,7 +114,7 @@ class song:
             while a <len( self.beatmap[:-math.ceil(scale)]):
                 b=numpy.append(b, (1-(a%1))*self.beatmap[math.floor(a)]+(a%1)*self.beatmap[math.ceil(a)])
                 a+=scale
-        self.beatmap=b
+            self.beatmap=b
 
     def analyze_beats(self, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
         #if audio is None and filename is None: (audio, samplerate) = open_audio()
@@ -123,7 +123,7 @@ class song:
             import os
             if not os.path.exists('SavedBeatmaps'):
                 os.mkdir('SavedBeatmaps')
-            cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + lib+"_"+id+'.txt'
+            cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
             try: 
                 self.beatmap=numpy.loadtxt(cacheDir, dtype=int)
                 self.bpm=numpy.average(self.beatmap)/self.samplerate
@@ -316,7 +316,7 @@ class song:
                     if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
                     result[a].extend(beat)
             self.audio = result
-            return None
+            return
         
         if 'reverse' in pattern[0].lower():
             for a in range(len(self.audio)): 
@@ -328,7 +328,7 @@ class song:
                     result[a].extend(beat)
 
             self.audio = result
-            return None
+            return
                     
                     #print(len(result[0]))
 
@@ -677,3 +677,28 @@ class song:
         #image=image.astype('uint8')
         #image=cv2.resize(image, (0,0), fx=len(image))
         cv2.imwrite('cv2_output.png', image)
+
+def fix_beatmap(filename, lib='madmom.BeatDetectionProcessor', scale=1, shift=0):
+    track=song(filename)
+    track.analyze_beats(lib=lib)
+    track.beatmap_shift(shift)
+    track.beatmap_scale(scale)
+    id=hex(len(track.audio[0]))
+    import os
+    if not os.path.exists('SavedBeatmaps'):
+        os.mkdir('SavedBeatmaps')
+    cacheDir="SavedBeatmaps/" + ''.join(track.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
+    a=input(f'Are you sure you want to overwrite {filename} beatmap using scale = {scale}; shift = {shift}? ("n" to cancel)')
+    if 'n' in a.lower(): return
+    else: numpy.savetxt(cacheDir, track.beatmap.astype(int), fmt='%d')
+
+def delete_beatmap(filename, lib='madmom.BeatDetectionProcessor'):
+    track=open_audio(filename)[0]
+    id=hex(len(track.audio[0]))
+    import os
+    if not os.path.exists('SavedBeatmaps'):
+        os.mkdir('SavedBeatmaps')
+    cacheDir="SavedBeatmaps/" + ''.join(track.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
+    a=input(f'Are you sure you want to delete {cacheDir}?')
+    if 'n' in a.lower(): return
+    else: os.remove(cacheDir)
