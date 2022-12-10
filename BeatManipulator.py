@@ -41,7 +41,7 @@ def open_audio(filename=None, lib='auto'):
 
 
 def generate_sidechain(samplerate=44100, length=0.5, curve=2, vol0=0, vol1=1, smoothing=40) ->numpy.array:
-    x=numpy.concaterate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(length*samplerate))**curve))
+    x=numpy.concatenate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(length*samplerate))**curve))
     return(x,x)
 
 def outputfilename(output, filename, suffix='_beatswap'):
