@@ -40,7 +40,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - `r` after a beat reverses that beat. `'1r, 2'` - every two beats first beat will be reversed
 - another way to reverse - `4:0` is reversed `0:4`.
 - `s` + number - changes speed and pitch of that beat. 2 will be 2 times faster, 1/2 will be 2 times slower. Note: Only integers or 1/integer numbers are supported, everything else will be rounded.
-- `c` - swaps left and right channels of the beat. If followed by 0, mutes left channel, 1 - right channel.
+- `c` - swaps left and right channels of the beat. If followed by 0, mutes left channel instead, 1 - right channel.
 - `b` + number - bitcrush. The higher the number, the stronger the effect. Barely noticeable at values less then 1
 - `d` + number - downsample (8-bit sound). The higher the number, the stronger the effect. Starts being noticeable at 3, good 8-bit sounding values are around 8+.
 - `t` + number - saturation
