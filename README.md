@@ -46,12 +46,18 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - `t` + number - saturation
 - you can combine stuff like `0:1/3d8v2cr` - that line means 0:1/3 beat will be downsampled, 200% volume, swapped channels, and reversed
 
+there are certain commands you can write in pattern instead of the actual pattern:
+`random` - each beat will be randomly selected from all beats, basically similar to shuffling all beats
+`reverse` - reverses all beat positions
+
 ### Other
 `song.quick_beatsample(output='', filename2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False):` - puts a filename2 (or audio2) sample on each beat. If you don't provide filename2, a file explorer will open.
 
 `song.quick_sidechain(output='', audio2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False)` - puts fake sidechain (fade in) on each beat. audio2 (or filename2) is the sidechain impulse, if not specified, it will be generated. Or you can manually generate it with `bm.generate_sidechain(samplerate=44100, len=0.5, curve=2, vol0=0, vol1=1)`. This one will be 0.5 seconds, 0% -> 100% volume fade in, with a minor curve.
 
-`song.write_audio(output, lib='pedalboard.io')` - writes the audio. This one doesn't automatically generate an output string, so make sure output ends with `.mp3` or `.wav`.
+`song.write_audio(output, lib='pedalboard.io')` - writes the audio. You are less likely to need this because all quick functions write audio already, unless `output` is set to `None`. This one doesn't automatically generate an output string, so make sure output ends with `.mp3` or `.wav`.
+
+`bm.fix_beatmap(filename, lib='madmom.BeatDetectionProcessor', scale=1, shift=0)` - `filename` is path to the song, this function loads the songs beatmap, applies shift and scale to it and writes it back to SavedBeatmaps, where cached beatmaps are saved. Basically this permanently applies scale and shift to a beatmap.
 
 There is more stuff. I will write how to use that later
 
