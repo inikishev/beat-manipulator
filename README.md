@@ -59,6 +59,8 @@ there are certain commands you can write in pattern instead of the actual patter
 
 `bm.fix_beatmap(filename, lib='madmom.BeatDetectionProcessor', scale=1, shift=0)` - `filename` is path to the song, this function loads the songs beatmap, applies shift and scale to it and writes it back to SavedBeatmaps, where cached beatmaps are saved. Basically this permanently applies scale and shift to a beatmap.
 
+`wrapper.py` and `presets.json` are basically my examples of using this library. They will eventually turn into a GUI app so that actual people can use it as well. `presets.json` has some cool patterns!
+
 There is more stuff. I will write how to use that later
 
 # Notes
