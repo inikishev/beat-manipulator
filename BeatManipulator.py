@@ -44,10 +44,10 @@ def generate_sidechain(samplerate=44100, length=0.5, curve=2, vol0=0, vol1=1, sm
     x=numpy.concatenate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(length*samplerate))**curve))
     return(x,x)
 
-def outputfilename(output, filename, suffix='_beatswap'):
+def outputfilename(output, filename, suffix='_beatswap', ext='mp3'):
     if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                return output+''.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                return output+'.'.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.'+ext
     
 
 def generate_sine(len, freq, samplerate, volume=1):
@@ -74,6 +74,8 @@ class song:
         self.beatmap=beatmap
         self.filename=self.filename.replace('\\', '/')
         self.samplerate=int(self.samplerate)
+        self.artist = self.filename.split('/')[-1].split(' - ')[0]
+        self.title= '.'.join(self.filename.split('/')[-1].split(' - ')[1].split('.')[:-1])
     
     def write_audio(self, output:str, lib:str='auto'):
         """"writes audio"""
@@ -169,11 +171,6 @@ class song:
             proc = madmom.features.beats.DBNBeatTrackingProcessor(fps=100, transition_lambda=1000)
             act = madmom.features.beats.RNNBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
             self.beatmap= proc(act)*self.samplerate
-        elif lib=='madmom.MultiModelSelectionProcessor': #broken
-            proc = madmom.features.beats.RNNBeatProcessor(post_processor=None)
-            predictions = proc(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
-            mm_proc = madmom.features.beats.MultiModelSelectionProcessor(num_ref_predictions=None)
-            self.beatmap= numpy.sort(mm_proc(predictions)*self.samplerate)
         elif lib=='madmom.DBNDownBeatTrackingProcessor':
             proc = madmom.features.downbeats.DBNDownBeatTrackingProcessor(beats_per_bar=[4], fps=100)
             act = madmom.features.downbeats.RNNDownBeatProcessor()(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
@@ -213,12 +210,177 @@ class song:
 
         elif lib=='split':
             self.beatmap= list(range(0, len(self.audio), len(self.audio)//split))
+        elif lib=='split':
+            self.beatmap= list(range(0, len(self.audio), len(self.audio)//split))
+
+
         if lib.split('.')[0]=='madmom':
             self.beatmap=numpy.absolute(self.beatmap-500)
             
         if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='%d')
         self.bpm=numpy.average(self.beatmap)/self.samplerate
         self.beatmap=self.beatmap.astype(int)
+
+    def generate_hitmap(self, lib='madmom.RNNBeatProcessor', caching=True):
+        """among us big chungus"""
+        if caching is True:
+            id=hex(len(self.audio[0]))
+            import os
+            if not os.path.exists('SavedBeatmaps'):
+                os.mkdir('SavedBeatmaps')
+            cacheDir="SavedBeatmaps/" + ''.join(self.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
+            try: 
+                cached=False
+                self.beat_probabilities=numpy.loadtxt(cacheDir)
+                cached=True
+            except OSError: cached=False
+        if cached is False:
+            if lib=='madmom.RNNBeatProcessor':
+                import madmom
+                proc = madmom.features.beats.RNNBeatProcessor()
+                self.beat_probabilities = proc(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
+            elif lib=='madmom.MultiModelSelectionProcessor':
+                import madmom
+                proc = madmom.features.beats.RNNBeatProcessor(post_processor=None)
+                predictions = proc(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
+                mm_proc = madmom.features.beats.MultiModelSelectionProcessor(num_ref_predictions=None)
+                self.beat_probabilities= mm_proc(predictions)*self.samplerate
+
+            if caching is True: numpy.savetxt(cacheDir, self.beat_probabilities)
+    
+    def osu(self):
+        def process(self, threshold):
+            hitmap=[]
+            actual_samplerate=int(self.samplerate/100)
+            beat_middle=int(actual_samplerate/2)
+            for i in range(len(self.beat_probabilities)):
+                if self.beat_probabilities[i]>threshold: hitmap.append(i*actual_samplerate + beat_middle)
+            hitmap=numpy.asarray(hitmap)
+            clump=[]
+            for i in range(len(hitmap)-1):
+                #print(i, abs(self.hitmap[i]-self.hitmap[i+1]), clump)
+                if abs(hitmap[i] - hitmap[i+1]) < self.samplerate/10: clump.append(i)
+                elif clump!=[]: 
+                    hitmap[numpy.array(clump)]=0
+                    #print(self.hitmap)
+                    hitmap=numpy.insert(hitmap, clump[0], hitmap[clump[0]])
+                    clump=[]
+            
+            hitmap=hitmap[hitmap!=0]
+            return hitmap
+            
+        osufile=lambda title,artist,version: ("osu file format v14\n"
+        "\n"
+        "[General]\n"
+        "AudioFilename: audio.mp3\n"
+        "AudioLeadIn: 0\n"
+        "PreviewTime: -1\n"
+        "Countdown: 0\n"
+        "SampleSet: Normal\n"
+        "StackLeniency: 0.5\n"
+        "Mode: 0\n"
+        "LetterboxInBreaks: 0\n"
+        "WidescreenStoryboard: 0\n"
+        "\n"
+        "[Editor]\n"
+        "DistanceSpacing: 1.1\n"
+        "BeatDivisor: 4\n"
+        "GridSize: 8\n"
+        "TimelineZoom: 1.6\n"
+        "\n"
+        "[Metadata]\n"
+        f"Title:{title}\n"
+        f"TitleUnicode:{title}\n"
+        f"Artist:{artist}\n"
+        f"ArtistUnicode:{artist}\n"
+        'Creator:BeatManipulator\n'
+        f'Version:{version}\n'
+        'Source:\n'
+        'Tags:BeatManipulator\n'
+        'BeatmapID:0\n'
+        'BeatmapSetID:-1\n'
+        '\n'
+        '[Difficulty]\n'
+        'HPDrainRate:4\n'
+        'CircleSize:4\n'
+        'OverallDifficulty:7.5\n'
+        'ApproachRate:10\n'
+        'SliderMultiplier:3.3\n'
+        'SliderTickRate:1\n'
+        '\n'
+        '[Events]\n'
+        '//Background and Video events\n'
+        '//Break Periods\n'
+        '//Storyboard Layer 0 (Background)\n'
+        '//Storyboard Layer 1 (Fail)\n'
+        '//Storyboard Layer 2 (Pass)\n'
+        '//Storyboard Layer 3 (Foreground)\n'
+        '//Storyboard Layer 4 (Overlay)\n'
+        '//Storyboard Sound Samples\n'
+        '\n'
+        '[TimingPoints]\n'
+        '0,140.0,4,1,0,100,1,0\n'
+        '\n'
+        '\n'
+        '[HitObjects]\n')
+        # remove the clumps
+        #print(self.hitmap)
+
+        #print(self.hitmap)
+
+        
+        #print(len(osumap))
+        #input('banana')
+        import shutil, os
+        if os.path.exists('BeatManipulator_TEMP'): shutil.rmtree('BeatManipulator_TEMP')
+        os.mkdir('BeatManipulator_TEMP')
+        import random
+        for difficulty in [0.2, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005]:
+            hitmap=process(self, difficulty)
+            osumap=numpy.vstack((hitmap,numpy.zeros(len(hitmap)),numpy.zeros(len(hitmap)))).T
+            for i in range(len(osumap)-1):
+                if i==0:continue
+                dist=(osumap[i,0]-osumap[i-1,0])*(1-(difficulty**0.3))
+                if dist<5000: dist=0.02
+                elif dist<7500: dist=0.05
+                elif dist<10000: dist=0.2
+                elif dist<15000: dist=0.6
+                elif dist<20000: dist=1
+                #elif dist<30000: dist=0.8
+                prev_x=osumap[i-1,1]
+                prev_y=osumap[i-1,2]
+                dirx=random.uniform(-dist,dist)
+                diry=dist-abs(dirx)*random.choice([-1, 1])
+                if abs(prev_x+dirx)>1: dirx=-dirx
+                if abs(prev_y+diry)>1: diry=-diry
+                x=prev_x+dirx
+                y=prev_y+diry
+                #print(dirx,diry,x,y)
+                #print(x>1, x<1, y>1, y<1)
+                if x>1: x=0.8
+                if x<-1: x=-0.8
+                if y>1: y=0.8
+                if y<-1: y=-0.8
+                #print(dirx,diry,x,y)
+                osumap[i,1]=x
+                osumap[i,2]=y
+
+            osumap[:,1]*=280
+            osumap[:,1]+=300
+            osumap[:,2]*=200
+            osumap[:,2]+=220
+            file=osufile(self.artist, self.title, difficulty)
+            for j in osumap:
+                #print('285,70,'+str(int(int(i)*1000/self.samplerate))+',1,0')
+                file+=f'{int(j[1])},{int(j[2])},{str(int(int(j[0])*1000/self.samplerate))},1,0\n'
+            with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty}].osu', 'x') as f:
+                f.write(file)
+        song.write_audio(self,'BeatManipulator_TEMP/audio.mp3')
+        shutil.make_archive('BeatManipulator_TEMP', 'zip', 'BeatManipulator_TEMP')
+        os.rename('BeatManipulator_TEMP.zip', outputfilename('', self.filename, '', 'osz'))
+        shutil.rmtree('BeatManipulator_TEMP')
+
+
 
     def audio_autotrim(self):
         n=0
@@ -245,8 +407,10 @@ class song:
 
     def beatmap_autoinsert(self):
         diff=(self.beatmap[1]-self.beatmap[0])
-        while diff<self.beatmap[0]:
+        a=0
+        while diff<self.beatmap[0] and a<100:
             self.beatmap=numpy.insert(self.beatmap, 0, self.beatmap[0]-diff)
+            a+=1
 
     def beatmap_shift(self, shift: float):
         if shift>0:
@@ -302,10 +466,12 @@ class song:
 
         # size, iterations are integers
         size=int(max(size//1, 1))
-        iterations=int(len(self.beatmap)//size)
+    
 
         # add beat to the end
         self.beatmap=numpy.unique(numpy.abs(numpy.append(self.beatmap, len(self.audio[0]))))
+
+        iterations=int(len(self.beatmap)//size)
         
         if 'random' in pattern[0].lower():
             import random
@@ -330,7 +496,7 @@ class song:
             self.audio = result
             return
                     
-                    #print(len(result[0]))
+        #print(len(result[0]))
 
 
         def beatswap_getnum(i: str, c: str):
@@ -347,9 +513,9 @@ class song:
                         return z
                 except ValueError: return None
 
-        #print(size, iterations)
+        #print(len(self.beatmap), size, iterations)
         # processing
-        for j in range(iterations):
+        for j in range(iterations+1):
             for i in pattern:
                 if '!' not in i:
                     n,s,st,reverse,z=0,'',None,False,None
@@ -476,6 +642,23 @@ class song:
             try: self.audio[:,int(self.beatmap[i]) + int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i]))) : int(self.beatmap[i])+int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i])))+int(l)]+=audio2
             except (IndexError, ValueError): pass
 
+    def hitsample(self, audio2=None):
+        if audio2 is None:audio2=generate_saw(0.05, 1000, self.samplerate)
+        try: l=len(audio2[0])
+        except (TypeError, IndexError): 
+            l=len(audio2)
+            audio2=numpy.vstack((audio2,audio2))
+        #print(self.audio)
+        self.audio=numpy.array(self.audio).copy()
+        #print(self.audio)
+        for i in range(len(self.hitmap)):
+            try: 
+                #print('before', self.audio[:,int(self.hitmap[i])])
+                self.audio[:,int(self.hitmap[i]) : int(self.hitmap[i]+l)]+=audio2
+                #print('after ', self.audio[:,int(self.hitmap[i])])
+                #print(self.hitmap[i])
+            except (IndexError, ValueError): pass
+
     def sidechain(self, audio2, shift=0, smoothing=40):
         try: l=len(audio2[0])
         except (TypeError, IndexError): 
@@ -522,7 +705,7 @@ class song:
         if output is not None:
             if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                output=output+''.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                output=output+'.'.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
             song.write_audio(self,output)
 
         self.beatmap=save
@@ -573,12 +756,12 @@ class song:
         if output is not None:
             if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                output=output+''.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                output=output+'.'.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
             song.write_audio(self,output)
         
         self.beatmap=save
 
-    def quick_beatsample(self, output:str='', filename2:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=True, audio2:numpy.array=None, suffix:str='_BeatSample', lib:str='madmom.BeatDetectionProcessor'):
+    def quick_beatsample(self, output:str='', filename2:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, audio2:numpy.array=None, suffix:str='_BeatSample', lib:str='madmom.BeatDetectionProcessor'):
         """Generates beatmap if it isn't generated, adds chosen sample to each beat of the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
         
         output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
@@ -622,7 +805,7 @@ class song:
         if output is not None:
             if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                output=output+''.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                output=output+'.'.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
             song.write_audio(self,output)
         self.beatmap=save
         

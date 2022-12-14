@@ -60,9 +60,9 @@ def process(song:bm.song, preset: str, scale:float, shift:float)->bm.song:
     return song
 
 
-
-def use_preset(output:str,filename: str, preset: str, presets=presets, scale=1, shift=0, test=False):
+def use_preset(output:str,filename: str, preset: str, presets=presets, scale=1, shift=0, beat:str='normal', test=False):
     song=bm.song(filename)
+    if beat=='shifted': song.quick_beatswap(output=None, pattern='1,2,3,4,5,7,6,8', scale=0.5)
     #print(song.samplerate)
     if preset is None:
         weights=[]
@@ -96,21 +96,24 @@ def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, test=T
 # ___ my stuff ___
 
 import random, os
-filename='F:/Stuff/Music/Tracks/Camo & Krooked, klei - Dissolve Me.mp3'
+filename='F:/Stuff/Music/Tracks/Maysev - Gleam.mp3'
 #filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
 
 scale=1
 shift=0
 test=False
 
-#bm.fix_beatmap(filename, scale=0.5, shift=-0.5)
-lib_test(filename, scale=1, shift=0)
+#bm.fix_beatmap(filename, scale=1, shift=2)
+#lib_test(filename, scale=1, shift=2)
 
-#use_preset ('', filename, 'syncopated', scale=scale, shift=shift, test=test)
+#use_preset ('', filename, 'jungle B', scale=scale, shift=shift, beat='normal', test=test)
 #use_preset ('', filename, None, scale=scale, shift=shift, test=False)
-all('',filename, scale=scale, shift=shift, test=test)
+#all('',filename, scale=1, shift=0, test=test)
 
-#song=bm.song(filename)
-#song.analyze_beats()
+song=bm.song(filename)
+song.generate_hitmap('madmom.RNNBeatProcessor')
+song.osu()
+#song.hitsample()
+#song.write_audio('out.mp3')
 #song.write_image()
 #song.quick_beatswap('', 'random', 0.125, 0, autoinsert=False)
