@@ -96,9 +96,20 @@ def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, test=T
 # ___ my stuff ___
 
 import random, os
-filename='F:/Stuff/Music/Tracks/Maysev - Gleam.mp3'
-#filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
+#filename='F:/Stuff/Music/Tracks/Maysev - Gleam.mp3'
+def randosu(filename=None):
+    if filename is None: filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
+    print(filename)
+    song=bm.song(filename)
+    song.generate_hitmap('madmom.RNNBeatProcessor')
+    song.osu()
+    song.generate_hitmap('madmom.MultiModelSelectionProcessor')
+    song.osu()
 
+#filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
+for i in range(1): randosu('F:/Stuff/Music/Tracks/Plug - Yes Man.mp3')
+#for i in range(10): randosu()
+#print(filename)
 scale=1
 shift=0
 test=False
@@ -110,9 +121,9 @@ test=False
 #use_preset ('', filename, None, scale=scale, shift=shift, test=False)
 #all('',filename, scale=1, shift=0, test=test)
 
-song=bm.song(filename)
-song.generate_hitmap('madmom.RNNBeatProcessor')
-song.osu()
+#song=bm.song(filename)
+#song.generate_hitmap('madmom.RNNBeatProcessor')
+#song.osu()
 #song.hitsample()
 #song.write_audio('out.mp3')
 #song.write_image()

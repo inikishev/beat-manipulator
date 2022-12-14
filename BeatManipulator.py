@@ -222,6 +222,7 @@ class song:
         self.beatmap=self.beatmap.astype(int)
 
     def generate_hitmap(self, lib='madmom.RNNBeatProcessor', caching=True):
+        self.hitlib=lib
         """among us big chungus"""
         if caching is True:
             id=hex(len(self.audio[0]))
@@ -245,6 +246,7 @@ class song:
                 predictions = proc(madmom.audio.signal.Signal(self.audio.T, self.samplerate))
                 mm_proc = madmom.features.beats.MultiModelSelectionProcessor(num_ref_predictions=None)
                 self.beat_probabilities= mm_proc(predictions)*self.samplerate
+                self.beat_probabilities/= numpy.max(self.beat_probabilities)
 
             if caching is True: numpy.savetxt(cacheDir, self.beat_probabilities)
     
@@ -259,7 +261,7 @@ class song:
             clump=[]
             for i in range(len(hitmap)-1):
                 #print(i, abs(self.hitmap[i]-self.hitmap[i+1]), clump)
-                if abs(hitmap[i] - hitmap[i+1]) < self.samplerate/10: clump.append(i)
+                if abs(hitmap[i] - hitmap[i+1]) < self.samplerate/16: clump.append(i)
                 elif clump!=[]: 
                     hitmap[numpy.array(clump)]=0
                     #print(self.hitmap)
@@ -293,8 +295,8 @@ class song:
         f"TitleUnicode:{title}\n"
         f"Artist:{artist}\n"
         f"ArtistUnicode:{artist}\n"
-        'Creator:BeatManipulator\n'
-        f'Version:{version}\n'
+        f'Creator:{self.hitlib} + BeatManipulator\n'
+        f'Version:{version} {self.hitlib}\n'
         'Source:\n'
         'Tags:BeatManipulator\n'
         'BeatmapID:0\n'
@@ -336,19 +338,33 @@ class song:
         os.mkdir('BeatManipulator_TEMP')
         import random
         for difficulty in [0.2, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005]:
-            hitmap=process(self, difficulty)
+            for i in range(4):
+                #print(i)
+                hitmap=process(self, difficulty)
             osumap=numpy.vstack((hitmap,numpy.zeros(len(hitmap)),numpy.zeros(len(hitmap)))).T
             for i in range(len(osumap)-1):
                 if i==0:continue
                 dist=(osumap[i,0]-osumap[i-1,0])*(1-(difficulty**0.3))
-                if dist<5000: dist=0.02
-                elif dist<7500: dist=0.05
-                elif dist<10000: dist=0.2
-                elif dist<15000: dist=0.6
+                if dist<1000: dist=0.005
+                elif dist<2000: dist=0.01
+                elif dist<3000: dist=0.015
+                elif dist<4000: dist=0.02
+                elif dist<5000: dist=0.25
+                elif dist<6000: dist=0.35
+                elif dist<7000: dist=0.45
+                elif dist<8000: dist=0.55
+                elif dist<9000: dist=0.65
+                elif dist<10000: dist=0.75
+                elif dist<12500: dist=0.85
+                elif dist<15000: dist=0.95
                 elif dist<20000: dist=1
                 #elif dist<30000: dist=0.8
                 prev_x=osumap[i-1,1]
                 prev_y=osumap[i-1,2]
+                if prev_x>0: prev_x=prev_x-dist*0.1
+                eif prev_x<0: prev_x=prev_x+dist*0.1
+                if prev_y>0: prev_y=prev_y-dist*0.1
+                if prev_y<0: prev_y=prev_y+dist*0.1
                 dirx=random.uniform(-dist,dist)
                 diry=dist-abs(dirx)*random.choice([-1, 1])
                 if abs(prev_x+dirx)>1: dirx=-dirx
@@ -365,19 +381,19 @@ class song:
                 osumap[i,1]=x
                 osumap[i,2]=y
 
-            osumap[:,1]*=280
+            osumap[:,1]*=300
             osumap[:,1]+=300
-            osumap[:,2]*=200
+            osumap[:,2]*=180
             osumap[:,2]+=220
             file=osufile(self.artist, self.title, difficulty)
             for j in osumap:
                 #print('285,70,'+str(int(int(i)*1000/self.samplerate))+',1,0')
                 file+=f'{int(j[1])},{int(j[2])},{str(int(int(j[0])*1000/self.samplerate))},1,0\n'
-            with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty}].osu', 'x') as f:
+            with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty} {self.hitlib}].osu', 'x') as f:
                 f.write(file)
         song.write_audio(self,'BeatManipulator_TEMP/audio.mp3')
         shutil.make_archive('BeatManipulator_TEMP', 'zip', 'BeatManipulator_TEMP')
-        os.rename('BeatManipulator_TEMP.zip', outputfilename('', self.filename, '', 'osz'))
+        os.rename('BeatManipulator_TEMP.zip', outputfilename('', self.filename, '_'+self.hitlib, 'osz'))
         shutil.rmtree('BeatManipulator_TEMP')
 
 
