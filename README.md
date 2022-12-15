@@ -61,6 +61,13 @@ there are certain commands you can write in pattern instead of the actual patter
 
 `wrapper.py` and `presets.json` are basically my examples of using this library. They will eventually turn into a GUI app so that actual people can use it as well. `presets.json` has some cool patterns!
 
+```
+song=bm.song(filename)
+song.generate_hitmap()
+song.osu()
+```
+will generate an osu beatmap. The .osz file that you can open with osu will be put next to the .py file
+
 There is more stuff. I will write how to use that later
 
 # Notes
