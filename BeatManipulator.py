@@ -62,15 +62,32 @@ def generate_square(len, freq, samplerate, volume=1):
 class song:
     def __init__(self, filename:str=None, audio:numpy.array=None, samplerate:int=None, beatmap:list=None):
         """song can be loaded from path to an audio file, or from a list/numpy array and samplerate. Audio array should have values from -1 to 1, multiple channels should be stacked vertically. Optionally you can provide your own beat map."""
+        self.audio=audio
+        self.samplerate=samplerate
         if filename is None:
             from tkinter.filedialog import askopenfilename
-            self.filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
-            self.audio, self.samplerate=open_audio(self.filename)
+            self.filename = askopenfilename(title='select song')
+            #self.audio, self.samplerate=open_audio(self.filename)
         else: 
             self.filename=filename
-            if audio is None or samplerate is None:
-                self.audio, self.samplerate=open_audio(self.filename)
-            else: self.audio, self.samplerate = audio, samplerate
+
+        if self.filename.lower().endswith('.zip'): 
+            import shutil,os
+            if os.path.exists('BeatManipulator_TEMP'): shutil.rmtree('BeatManipulator_TEMP')
+            os.mkdir('BeatManipulator_TEMP')
+            shutil.unpack_archive(self.filename, 'BeatManipulator_TEMP')
+            for root,dirs,files in os.walk('BeatManipulator_TEMP'):
+                for fname in files:
+                    if fname.lower().endswith('.mp3') or fname.lower().endswith('.wav') or fname.lower().endswith('.ogg') or fname.lower().endswith('.flac'):
+                        self.audio, self.samplerate=open_audio(root.replace('\\','/')+'/'+fname)
+                        stop=True
+                        break
+                if stop is True: break
+            shutil.rmtree('BeatManipulator_TEMP')
+    
+        if self.audio is None or self.samplerate is None:
+            self.audio, self.samplerate=open_audio(self.filename)
+        
         self.beatmap=beatmap
         self.filename=self.filename.replace('\\', '/')
         self.samplerate=int(self.samplerate)
@@ -263,18 +280,20 @@ class song:
                 #print(i, abs(self.hitmap[i]-self.hitmap[i+1]), clump)
                 if abs(hitmap[i] - hitmap[i+1]) < self.samplerate/16: clump.append(i)
                 elif clump!=[]: 
+                    clump.append(i)
+                    actual_time=hitmap[clump[0]]
                     hitmap[numpy.array(clump)]=0
                     #print(self.hitmap)
-                    hitmap=numpy.insert(hitmap, clump[0], hitmap[clump[0]])
+                    hitmap[clump[0]]=actual_time
                     clump=[]
             
             hitmap=hitmap[hitmap!=0]
             return hitmap
-            
+        
         osufile=lambda title,artist,version: ("osu file format v14\n"
         "\n"
         "[General]\n"
-        "AudioFilename: audio.mp3\n"
+        f"AudioFilename: {self.filename.split('/')[-1]}\n"
         "AudioLeadIn: 0\n"
         "PreviewTime: -1\n"
         "Countdown: 0\n"
@@ -336,12 +355,16 @@ class song:
         import shutil, os
         if os.path.exists('BeatManipulator_TEMP'): shutil.rmtree('BeatManipulator_TEMP')
         os.mkdir('BeatManipulator_TEMP')
+        hitmap=[]
         import random
         for difficulty in [0.2, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005]:
             for i in range(4):
                 #print(i)
-                hitmap=process(self, difficulty)
-            osumap=numpy.vstack((hitmap,numpy.zeros(len(hitmap)),numpy.zeros(len(hitmap)))).T
+                this_difficulty=process(self, difficulty)
+            hitmap.append(this_difficulty)
+        for k in range(len(hitmap)):
+            osumap=numpy.vstack((hitmap[k],numpy.zeros(len(hitmap[k])),numpy.zeros(len(hitmap[k])))).T
+            difficulty= [0.2, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005][k]
             for i in range(len(osumap)-1):
                 if i==0:continue
                 dist=(osumap[i,0]-osumap[i-1,0])*(1-(difficulty**0.3))
@@ -362,9 +385,9 @@ class song:
                 prev_x=osumap[i-1,1]
                 prev_y=osumap[i-1,2]
                 if prev_x>0: prev_x=prev_x-dist*0.1
-                eif prev_x<0: prev_x=prev_x+dist*0.1
+                elif prev_x<0: prev_x=prev_x+dist*0.1
                 if prev_y>0: prev_y=prev_y-dist*0.1
-                if prev_y<0: prev_y=prev_y+dist*0.1
+                elif prev_y<0: prev_y=prev_y+dist*0.1
                 dirx=random.uniform(-dist,dist)
                 diry=dist-abs(dirx)*random.choice([-1, 1])
                 if abs(prev_x+dirx)>1: dirx=-dirx
@@ -391,7 +414,9 @@ class song:
                 file+=f'{int(j[1])},{int(j[2])},{str(int(int(j[0])*1000/self.samplerate))},1,0\n'
             with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty} {self.hitlib}].osu', 'x') as f:
                 f.write(file)
-        song.write_audio(self,'BeatManipulator_TEMP/audio.mp3')
+        if self.filename is not None: 
+            shutil.copyfile(self.filename, 'BeatManipulator_TEMP/'+self.filename.split('/')[-1])
+        else: song.write_audio(self,'BeatManipulator_TEMP/audio.mp3')
         shutil.make_archive('BeatManipulator_TEMP', 'zip', 'BeatManipulator_TEMP')
         os.rename('BeatManipulator_TEMP.zip', outputfilename('', self.filename, '_'+self.hitlib, 'osz'))
         shutil.rmtree('BeatManipulator_TEMP')
