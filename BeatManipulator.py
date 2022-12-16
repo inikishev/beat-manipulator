@@ -126,13 +126,22 @@ class song:
         #     song.export(output, format=format)
 
     def beatmap_scale(self, scale:float):
+        #print(self.beatmap)
         import math
         if scale!=1:
             a=0
             b=numpy.array([])
-            while a <len( self.beatmap[:-math.ceil(scale)]):
-                b=numpy.append(b, (1-(a%1))*self.beatmap[math.floor(a)]+(a%1)*self.beatmap[math.ceil(a)])
-                a+=scale
+            if scale%1==0:
+                while a <len( self.beatmap[:-int(scale)]):
+                    #print(a, self.beatmap[int(a)], end=',       ')
+                    b=numpy.append(b,self.beatmap[int(a)])
+                    a+=scale
+                    #print(self.beatmap[int(a)])
+            else:
+                while a <len( self.beatmap[:-math.ceil(scale)]):
+                    #print(a,b)
+                    b=numpy.append(b, (1-(a%1))*self.beatmap[math.floor(a)]+(a%1)*self.beatmap[math.ceil(a)])
+                    a+=scale
             self.beatmap=b
 
     def analyze_beats(self, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
@@ -412,7 +421,7 @@ class song:
             for j in osumap:
                 #print('285,70,'+str(int(int(i)*1000/self.samplerate))+',1,0')
                 file+=f'{int(j[1])},{int(j[2])},{str(int(int(j[0])*1000/self.samplerate))},1,0\n'
-            with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty} {self.hitlib}].osu', 'x') as f:
+            with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty} {self.hitlib}].osu', 'x', encoding="utf-8") as f:
                 f.write(file)
         if self.filename is not None: 
             shutil.copyfile(self.filename, 'BeatManipulator_TEMP/'+self.filename.split('/')[-1])
@@ -428,6 +437,7 @@ class song:
         for i in self.audio[0]:
             if i>=0.0001:break
             n+=1
+        if type(self.audio) is tuple or list: self.audio = numpy.asarray(self.audio)
         self.audio = numpy.asarray([self.audio[0,n:], self.audio[1,n:]])
         #print(beatmap)
         if self.beatmap is not None: 
@@ -454,12 +464,31 @@ class song:
             a+=1
 
     def beatmap_shift(self, shift: float):
+        #print(shift)
+        length=len(self.beatmap)
         if shift>0:
-            for i in range(len(self.beatmap)-1):
-                self.beatmap[i] = self.beatmap[i] + shift * (self.beatmap[i+1] - self.beatmap[i])
+            if shift%1==0:
+                for i in range(length-int(shift)-1):
+                    #print(self.beatmap[i], end=', ')
+                    self.beatmap[i] = self.beatmap[i+int(shift)]
+                    #print(self.beatmap[i])
+            else:
+                for i in range(length-int(shift)-1):
+                    self.beatmap[i] = self.beatmap[i] + shift * (self.beatmap[i+1] - self.beatmap[i])
         elif shift<0:
-            for i in reversed(range(len(self.beatmap)-1)):
-                self.beatmap[i+1] = self.beatmap[i+1] - shift * (self.beatmap[i] - self.beatmap[i+1])
+            if shift%1==0:
+                for i in reversed(range(length)):
+                    #print(self.beatmap[i], i-shift, length, end=', ')
+                    if i+shift<0: self.beatmap[i] = self.beatmap[i]+(shift-i)
+                    else: self.beatmap[i] = self.beatmap[i+shift]
+                    #print(self.beatmap[i])
+            else:
+                for i in reversed(range(length)):
+                    #print(self.beatmap[i], end=', ')
+                    if i+shift<0: self.beatmap[i] = self.beatmap[i]+(shift-i)
+                    else: self.beatmap[i] = self.beatmap[i] + shift * (self.beatmap[i] - self.beatmap[i-1])
+                    #print(self.beatmap[i])
+                #self.beatmap = numpy.sort(self.beatmap)
 
     def beatmap_trim(self, start=0, end=None):
         start*=self.samplerate
@@ -510,29 +539,34 @@ class song:
     
 
         # add beat to the end
-        self.beatmap=numpy.unique(numpy.abs(numpy.append(self.beatmap, len(self.audio[0]))))
+        self.beatmap=numpy.abs(numpy.append(self.beatmap, len(self.audio[0])))
 
         iterations=int(len(self.beatmap)//size)
         
         if 'random' in pattern[0].lower():
             import random
             for i in range(len(self.beatmap)):
+
                 choice=random.randint(1,len(self.beatmap)-1)
                 for a in range(len(self.audio)): 
-                    beat=self.audio[a][self.beatmap[choice-1]:self.beatmap[choice]-smoothing]
-                    if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
-                    result[a].extend(beat)
+                    try:
+                        beat=self.audio[a][self.beatmap[choice-1]:self.beatmap[choice]-smoothing]
+                        if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
+                        result[a].extend(beat)
+                    except IndexError: pass
             self.audio = result
             return
         
         if 'reverse' in pattern[0].lower():
             for a in range(len(self.audio)): 
                 for i in list(reversed(range(len(self.beatmap))))[:-1]:
-                    beat=self.audio[a][self.beatmap[i-1]:self.beatmap[i]-smoothing]
-                    #print(self.beatmap[i-1],self.beatmap[i])
-                    #print(result[a][-1], beat[0])
-                    if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
-                    result[a].extend(beat)
+                    try:
+                        beat=self.audio[a][self.beatmap[i-1]:self.beatmap[i]-smoothing]
+                        #print(self.beatmap[i-1],self.beatmap[i])
+                        #print(result[a][-1], beat[0])
+                        if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[0],smoothing))
+                        result[a].extend(beat)
+                    except IndexError: pass
 
             self.audio = result
             return
@@ -664,8 +698,10 @@ class song:
                                 #print('Adding beat... a, s, st:', a, s, st, sep=',  ')
                                 #print(result[a][-1])
                                 #print(beat[a][0])
-                                if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[a][0],smoothing))
-                                result[a].extend(beat[a])
+                                try:
+                                    if smoothing>0: result[a].extend(numpy.linspace(result[a][-1],beat[a][0],smoothing))
+                                    result[a].extend(beat[a])
+                                except IndexError: pass
                                 #print(len(result[0]))
 
                             #   
@@ -680,6 +716,7 @@ class song:
             l=len(audio2)
             audio2=numpy.vstack((audio2,audio2))
         for i in range(len(self.beatmap)):
+            #print(self.beatmap[i])
             try: self.audio[:,int(self.beatmap[i]) + int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i]))) : int(self.beatmap[i])+int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i])))+int(l)]+=audio2
             except (IndexError, ValueError): pass
 
@@ -912,9 +949,13 @@ def fix_beatmap(filename, lib='madmom.BeatDetectionProcessor', scale=1, shift=0)
     if not os.path.exists('SavedBeatmaps'):
         os.mkdir('SavedBeatmaps')
     cacheDir="SavedBeatmaps/" + ''.join(track.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
-    a=input(f'Are you sure you want to overwrite {cacheDir} using scale = {scale}; shift = {shift}? ("n" to cancel): ')
-    if 'n' in a.lower(): return
-    else: numpy.savetxt(cacheDir, track.beatmap.astype(int), fmt='%d')
+    a=input(f'Are you sure you want to overwrite {cacheDir} using scale = {scale}; shift = {shift}? ("y" to continue): ')
+    if 'n' in a.lower() or not 'y' in a.lower():
+        print('Operation canceled.') 
+        return
+    else: 
+        numpy.savetxt(cacheDir, track.beatmap.astype(int), fmt='%d')
+        print('Beatmap overwritten.')
 
 def delete_beatmap(filename, lib='madmom.BeatDetectionProcessor'):
     track=open_audio(filename)[0]
@@ -923,6 +964,10 @@ def delete_beatmap(filename, lib='madmom.BeatDetectionProcessor'):
     if not os.path.exists('SavedBeatmaps'):
         os.mkdir('SavedBeatmaps')
     cacheDir="SavedBeatmaps/" + ''.join(track.filename.split('/')[-1]) + "_"+lib+"_"+id+'.txt'
-    a=input(f'Are you sure you want to delete {cacheDir}? ("n" to cancel): ')
-    if 'n' in a.lower(): return
-    else: os.remove(cacheDir)
+    a=input(f'Are you sure you want to delete {cacheDir}? ("y" to continue): ')
+    if 'n' in a.lower() or not 'y' in a.lower():
+        print('Operation canceled.') 
+        return
+    else: 
+        os.remove(cacheDir)
+        print('Beatmap deleted.')

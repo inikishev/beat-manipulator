@@ -83,51 +83,51 @@ def use_preset(output:str,filename: str, preset: str, presets=presets, scale=1, 
     else: song=process(song, preset,scale=scale,shift=shift)
     song.write_audio(output=bm.outputfilename(output, filename, suffix=' ('+name+')'))
     
-def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, test=True):
+def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, beat='normal', test=True):
     if test is True: 
         testsong=bm.song(filename=filename)
         lib_test(testsong, output, samplerate=testsong.samplerate)
         del testsong
     for i in presets:
-        use_preset(output, filename, preset=i, presets=presets, scale=scale, shift=shift, test=False)
+        use_preset(output, filename, preset=i, presets=presets, scale=scale, shift=shift, beat=beat, test=False)
 
-
-
-# ___ my stuff ___
-
-import random, os
-#
-filename='F:/Stuff/Music/Tracks/Maysev - Gleam.mp3'
 def randosu(filename=None):
     if filename is None: filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
     print(filename)
     song=bm.song(filename)
     song.generate_hitmap('madmom.RNNBeatProcessor')
     song.osu()
-    song.generate_hitmap('madmom.MultiModelSelectionProcessor')
-    song.osu()
 
+
+# ___ my stuff ___
+import random,os
+
+# ___ get song ___
+filename='F:/Stuff/Music/Tracks/Limewax - Arsch Noisyum.mp3'
 #filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
-#for i in range(1): randosu('F:/Stuff/Music/Tracks/Plug - Yes Man.mp3')
-#for i in range(10): randosu()
 print(filename)
-scale=1
-shift=0
-test=False
 
-#bm.fix_beatmap(filename, scale=1, shift=2)
-#lib_test(filename, scale=1, shift=2)
+# ___ analyze+fix ___
+scale, shift = 1, 0
+#lib_test(filename, scale=scale, shift=shift)
+#bm.fix_beatmap(filename, scale=scale, shift=shift)
 
-#use_preset ('', filename, 'jungle B', scale=scale, shift=shift, beat='normal', test=test)
+# ___ beat swap ___
+#use_preset ('', filename, 'drill', scale=1, shift=0, beat='normal', test=False)
 #use_preset ('', filename, None, scale=scale, shift=shift, test=False)
-#all('',filename, scale=1, shift=0, test=test)
-import Saber2Osu as s2o
-osu=s2o.osu_map(threshold=0.3, declumping=100)
-#song=bm.song()
-#song=bm.song(filename)
-#song.generate_hitmap('madmom.RNNBeatProcessor')
+#all('', filename, scale=1, shift=0, beat='normal', test=False)
+
+# ___ osu ___
 #song.osu()
 #song.hitsample()
-#song.write_audio('out.mp3')
+
+# ___ saber2osu ___
+#import Saber2Osu as s2o
+#osu=s2o.osu_map(threshold=0.3, declumping=100)
+
+# ___ song to image ___
 #song.write_image()
-#song.quick_beatswap('', 'random', 0.125, 0, autoinsert=False)
+
+#all('', 'F:/Stuff/Music/Tracks/TEMPLA - Fracture.mp3',          scale=1, shift=0, beat='normal', test=False)
+all('', 'F:/Stuff/Music/Tracks/Limewax - Arsch Noisyum.mp3',    scale=1, shift=0, beat='shifted', test=False)
+#all('', 'F:/Stuff/Music/Tracks/Noisia - Anomaly.mp3',           scale=1, shift=0, beat='normal', test=False)
