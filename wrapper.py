@@ -89,6 +89,9 @@ def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, beat='
         lib_test(testsong, output, samplerate=testsong.samplerate)
         del testsong
     for i in presets:
+        if 'scale' in i: 
+            if i['scale']<0.01: 
+                continue
         use_preset(output, filename, preset=i, presets=presets, scale=scale, shift=shift, beat=beat, test=False)
 
 def randosu(filename=None):
@@ -103,7 +106,7 @@ def randosu(filename=None):
 import random,os
 
 # ___ get song ___
-filename='F:/Stuff/Music/Tracks/Limewax - Arsch Noisyum.mp3'
+filename='F:/Stuff/Music/Tracks/Noisia & Former - Pleasure Model (Rohaan Remix).mp3'
 #filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
 print(filename)
 
@@ -112,10 +115,14 @@ scale, shift = 1, 0
 #lib_test(filename, scale=scale, shift=shift)
 #bm.fix_beatmap(filename, scale=scale, shift=shift)
 
-# ___ beat swap ___
-#use_preset ('', filename, 'drill', scale=1, shift=0, beat='normal', test=False)
+# ___ presets ___
+use_preset ('', filename, 'effect - robot', scale=1, shift=0, beat='normal', test=False)
 #use_preset ('', filename, None, scale=scale, shift=shift, test=False)
 #all('', filename, scale=1, shift=0, beat='normal', test=False)
+
+# ___ beat swap __
+#song=bm.song(filename)
+#song.quick_beatswap(output='', pattern='1,1,1,1,1,1,1,1,8!', scale=0.01, shift=0)
 
 # ___ osu ___
 #song.osu()
@@ -128,6 +135,8 @@ scale, shift = 1, 0
 # ___ song to image ___
 #song.write_image()
 
-#all('', 'F:/Stuff/Music/Tracks/TEMPLA - Fracture.mp3',          scale=1, shift=0, beat='normal', test=False)
-all('', 'F:/Stuff/Music/Tracks/Limewax - Arsch Noisyum.mp3',    scale=1, shift=0, beat='shifted', test=False)
-#all('', 'F:/Stuff/Music/Tracks/Noisia - Anomaly.mp3',           scale=1, shift=0, beat='normal', test=False)
+# ___ randoms ___
+# while True:
+#     filename = 'F:/Stuff/Music/Tracks/'+random.choice(os.listdir("F:\Stuff\Music\Tracks"))
+#     print(filename)
+#     use_preset ('', filename, None, scale=scale, shift=shift, test=False)
