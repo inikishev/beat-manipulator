@@ -32,7 +32,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 - `'1, 3, 2, 4'` - every 4 beats, swap 2nd and 3rd beat. This pattern loops every 4 beats, because 4 is the biggest number in it.
 - `!` after a number sets length of the pattern (beat isn't played). `'1, 3, 2, 4, 8!'` - every 8 beats, swap 2nd and 3rd beat, and 5-8 beats will be skipped.
 - `'1, 3, 4'` - skip 2nd beat
-- `'1,2,2,3'` - repeat 2nd beat
+- `'1, 2, 2, 4'` - repeat 2nd beat
 - `'1, 1:1.5, 4'` - play a range of beats. `0:0.5` means first half of 1st beat. Keep that in mind, to play first half of 5th beat, you do `4:4.5`, not `5:5.5`. `1` is equivalent to `0:1`. `1.5` is equivalent to `0.5:1.5`. `1,2,3,4` is `0:4`.
 - `'1, 0:1/3, 0:1/3, 2/3:1'` - you can use expressions with `+`, `-`, `*`, `/`.
 - `?` after a beat makes that number not count for looping. `'1, 2, 3, 4!, 8?'` - every 4 beats, 4th beat is replaced with 8th beat.
