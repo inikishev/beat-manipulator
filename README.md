@@ -1,3 +1,4 @@
+# IDK HOW TO MAKE THIS INTO EXE FILE SO THAT ACTUAL PEOPLE CAN USE IT SORRY GAMERS
 Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 
 # Requirements
