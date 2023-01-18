@@ -9,7 +9,7 @@ Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 Quick commands to install those packages at the bottom.
 
 # Basic how to use
-Download the repo and open Jupiter.ipynb.
+**Download the repo and open Jupiter.ipynb.**
 
 Alternatively put BeatManipulator.py next to your .py file so that you can import it. Copy the following into your .py:
 ```
