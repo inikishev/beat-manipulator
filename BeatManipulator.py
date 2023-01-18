@@ -44,7 +44,7 @@ def generate_sidechain(samplerate=44100, length=0.5, curve=2, vol0=0, vol1=1, sm
     x=numpy.concatenate((numpy.linspace(1,0,smoothing),numpy.linspace(vol0,vol1,int(length*samplerate))**curve))
     return(x,x)
 
-def outputfilename(output, filename, suffix='_beatswap', ext='mp3'):
+def outputfilename(output, filename, suffix=' (beatswap)', ext='mp3'):
     if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
                 return output+'.'.join(''.join(filename.split('/')[-1]).split('.')[:-1])+suffix+'.'+ext
@@ -58,6 +58,72 @@ def generate_saw(len, freq, samplerate, volume=1):
 
 def generate_square(len, freq, samplerate, volume=1):
     return ((numpy.linspace(0, freq*2*len, int(len*samplerate)))//1%2 * 2 - 1)*volume
+
+def pitch(audio, pitch, grain):
+    grain=int(grain)
+    if len(audio)>10: audio=[audio]
+    if type(audio) is not list: audio=audio.tolist()
+    length=len(audio[0])
+    if pitch<1:
+        pitch=int(1//pitch)
+        if grain%2!=0: grain+=1
+        for i in range(len(audio)):
+            n=0
+            while n+grain<length:
+                #print(len(audio[i]))
+                #print(n)
+                audio[i][n:n+grain]=numpy.repeat(audio[i][n:n+int(grain/2)], 2)
+                #print(len(audio[i]))
+                n+=grain
+    elif pitch>1:
+        pitch=int(pitch)
+        for i in range(len(audio)):
+            n=0
+            while n+grain<length:
+                audio[i][n:n+grain]=audio[i][n:n+grain:pitch]*pitch
+                n+=grain
+    return audio
+
+def pitchB(audio, pitch, grain):
+    grain=int(grain)
+    if len(audio)>10: audio=[audio]
+    if type(audio) is not list: audio=audio.tolist()
+    length=len(audio[0])
+    if pitch<1:
+        pitch=int(1//pitch)
+        if grain%2!=0: grain+=1
+        for i in range(len(audio)):
+            n=0
+            while n+grain<length:
+                #print(len(audio[i]))
+                #print(n)
+                audio[i][n:n+grain]=numpy.repeat(audio[i][n:n+int(grain/2)], 2)
+                #print(len(audio[i]))
+                n+=grain
+    elif pitch>1:
+        pitch=int(pitch)
+        for i in range(len(audio)):
+            n=0
+            while n+grain<length:
+                audio2=audio[i][n:n+grain:pitch]
+                for j in range(pitch-1):
+                    #print(j)
+                    audio2.extend(audio2[::1] if j%2==1 else audio2[::-1])
+                audio[i][n:n+grain]=audio2
+                n+=grain
+    return audio
+
+def grain(audio, grain):
+    grain=int(grain)
+    if len(audio)>10: audio=[audio]
+    if type(audio) is not list: audio=audio.tolist()
+    length=len(audio[0])
+    n=0
+    for i in range(len(audio)):
+        while n+2*grain<length:
+            audio[i][n+grain:n+2*grain]=audio[i][n:n+grain]
+            n+=grain*2
+    return audio
 
 class song:
     def __init__(self, filename:str=None, audio:numpy.array=None, samplerate:int=None, beatmap:list=None):
@@ -93,9 +159,11 @@ class song:
         self.samplerate=int(self.samplerate)
         self.artist = self.filename.split('/')[-1].split(' - ')[0]
         self.title= '.'.join(self.filename.split('/')[-1].split(' - ')[1].split('.')[:-1])
+        print(f'Loaded {self.artist} - {self.title}; ')
     
     def write_audio(self, output:str, lib:str='auto'):
         """"writes audio"""
+        if lib!='auto': print(f'writing {output} with {lib}')
         if lib=='pedalboard.io':
             if not isinstance(self.audio,numpy.ndarray): self.audio=numpy.asarray(self.audio)
             #print(audio)
@@ -126,9 +194,11 @@ class song:
         #     song.export(output, format=format)
 
     def beatmap_scale(self, scale:float):
+        
         #print(self.beatmap)
         import math
         if scale!=1:
+            print(f'scale={scale}; ')
             a=0
             b=numpy.array([])
             if scale%1==0:
@@ -145,6 +215,7 @@ class song:
             self.beatmap=b
 
     def analyze_beats(self, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
+        print(f'analyzing beats using {lib}; ')
         #if audio is None and filename is None: (audio, samplerate) = open_audio()
         if caching is True:
             id=hex(len(self.audio[0]))
@@ -248,6 +319,7 @@ class song:
         self.beatmap=self.beatmap.astype(int)
 
     def generate_hitmap(self, lib='madmom.RNNBeatProcessor', caching=True):
+        print(f'analyzing hits using {lib}; ')
         self.hitlib=lib
         """among us big chungus"""
         if caching is True:
@@ -277,6 +349,7 @@ class song:
             if caching is True: numpy.savetxt(cacheDir, self.beat_probabilities)
     
     def osu(self):
+        print(f'generating osu file')
         def process(self, threshold):
             hitmap=[]
             actual_samplerate=int(self.samplerate/100)
@@ -433,6 +506,7 @@ class song:
 
 
     def audio_autotrim(self):
+        print(f'autotrimming; ')
         n=0
         for i in self.audio[0]:
             if i>=0.0001:break
@@ -446,6 +520,7 @@ class song:
             print('It is recommended to only use autotrim after computing the beatmap')
 
     def beatmap_autoscale(self):
+        print(f'autoscaling; ')
         bpm=(self.beatmap[-1]-self.beatmap[0])/(len(self.beatmap)-1)
         #print('BPM =', (bpm/samplerate) * 240, bpm)
         if bpm>=160000: scale=1/8
@@ -457,6 +532,7 @@ class song:
         song.beatmap_scale(self,scale)        
 
     def beatmap_autoinsert(self):
+        print(f'autoinserting; ')
         diff=(self.beatmap[1]-self.beatmap[0])
         a=0
         while diff<self.beatmap[0] and a<100:
@@ -464,6 +540,7 @@ class song:
             a+=1
 
     def beatmap_shift(self, shift: float):
+        if shift!=0: print(f'shift={shift}; ')
         #print(shift)
         length=len(self.beatmap)
         if shift>0:
@@ -491,6 +568,7 @@ class song:
                 #self.beatmap = numpy.sort(self.beatmap)
 
     def beatmap_trim(self, start=0, end=None):
+        if start!=0 or end is not None: print(f'start={start}; end={end}; ')
         start*=self.samplerate
         self.beatmap=self.beatmap[self.beatmap>=start].astype(int)
         if end is not None: self.beatmap=self.beatmap[self.beatmap<=end].astype(int)
@@ -502,6 +580,7 @@ class song:
         size=0    
         #cut processing??? not worth it, it is really fast anyways
         pattern=pattern.replace(' ', '').split(sep)
+        print(f"beatswapping with {' '.join(pattern)}; ")
         for j in pattern:
             s=''
             if '?' not in j:
@@ -711,6 +790,7 @@ class song:
         self.audio = result
 
     def beatsample(self, audio2, shift=0):
+        print(f'beatsample; ')
         try: l=len(audio2[0])
         except (TypeError, IndexError): 
             l=len(audio2)
@@ -721,6 +801,7 @@ class song:
             except (IndexError, ValueError): pass
 
     def hitsample(self, audio2=None):
+        print(f'hitsample; ')
         if audio2 is None:audio2=generate_saw(0.05, 1000, self.samplerate)
         try: l=len(audio2[0])
         except (TypeError, IndexError): 
@@ -738,6 +819,7 @@ class song:
             except (IndexError, ValueError): pass
 
     def sidechain(self, audio2, shift=0, smoothing=40):
+        print(f'sidechain; ')
         try: l=len(audio2[0])
         except (TypeError, IndexError): 
             l=len(audio2)
@@ -746,7 +828,7 @@ class song:
             try: self.audio[:,int(self.beatmap[i])-smoothing + int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i]))) : int(self.beatmap[i])-smoothing+int(float(shift) * (int(self.beatmap[i+1])-int(self.beatmap[i])))+int(l)]*=audio2
             except (IndexError, ValueError): break
 
-    def quick_beatswap(self, output:str='', pattern:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, suffix:str='_BeatSwap', lib:str='madmom.BeatDetectionProcessor'):
+    def quick_beatswap(self, output:str='', pattern:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, suffix:str=' (BeatSwap)', lib:str='madmom.BeatDetectionProcessor'):
         """Generates beatmap if it isn't generated, applies beatswapping to the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
         
         output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
@@ -770,6 +852,7 @@ class song:
         suffix: suffix that will be appended to the filename
         
         lib: beat detection library"""
+        print('___')
         if self.beatmap is None: song.analyze_beats(self,lib=lib)
         if autotrim is True: song.audio_autotrim(self)
         save=self.beatmap
@@ -789,7 +872,7 @@ class song:
         self.beatmap=save
 
 
-    def quick_sidechain(self, output:str='', audio2:numpy.array=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, filename2:str=None, suffix:str='_Sidechain', lib:str='madmom.BeatDetectionProcessor'):
+    def quick_sidechain(self, output:str='', audio2:numpy.array=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, filename2:str=None, suffix:str=' (sidechain)', lib:str='madmom.BeatDetectionProcessor'):
         """Generates beatmap if it isn't generated, applies fake sidechain on each beat to the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
         
         output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
@@ -815,6 +898,7 @@ class song:
         suffix: suffix that will be appended to the filename
         
         lib: beat detection library"""
+        print('___')
         if filename2 is None and audio2 is None:
             audio2=generate_sidechain()
 
@@ -839,7 +923,7 @@ class song:
         
         self.beatmap=save
 
-    def quick_beatsample(self, output:str='', filename2:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, audio2:numpy.array=None, suffix:str='_BeatSample', lib:str='madmom.BeatDetectionProcessor'):
+    def quick_beatsample(self, output:str='', filename2:str=None, scale:float=1, shift:float=0, start:float=0, end:float=None, autotrim:bool=True, autoscale:bool=False, autoinsert:bool=False, audio2:numpy.array=None, suffix:str=' (BeatSample)', lib:str='madmom.BeatDetectionProcessor'):
         """Generates beatmap if it isn't generated, adds chosen sample to each beat of the song and writes the processed song it next to the .py file. If you don't want to write the file, set output=None
         
         output: can be a relative or an absolute path to a folder or to a file. Filename will be created from the original filename + a suffix to avoid overwriting. If path already contains a filename which ends with audio file extension, such as .mp3, that filename will be used.
@@ -863,6 +947,7 @@ class song:
         suffix: suffix that will be appended to the filename
         
         lib: beat detection library"""
+        print('___')
         if filename2 is None and audio2 is None:
             from tkinter.filedialog import askopenfilename
             filename2 = askopenfilename(title='select sidechain impulse', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
