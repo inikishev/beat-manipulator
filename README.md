@@ -52,6 +52,7 @@ Patterns are sequences of numbers or ranges, separated by `,`. Numbers and range
 there are certain commands you can write in pattern instead of the actual pattern:
 - `random` - each beat will be randomly selected from all beats, basically similar to shuffling all beats
 - `reverse` - reverses the order of all beats
+- `test` - test beat detection by putting cowbells on each beat. The highest pitched cowbell should be on the first beat; next cowbell should be on the snare.
 
 ### Other
 `song.quick_beatsample(output='', filename2=None, scale=1, shift=0, start=0, end=None, autotrim=True, autoscale=False, autoinsert=False):` - puts a filename2 (or audio2) sample on each beat. If you don't provide filename2, a file explorer will open.
