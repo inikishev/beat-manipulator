@@ -232,16 +232,19 @@
     "darkstep": {
         "pattern": "1,1,3,1, | 1,7,1,1, | 11,9,9,11, | 9,9,15,16",
         "scale": 0.5,
+        "normalize": true,
         "weight": 4
     },
     "darkstep long": {
         "pattern": "1,1,3,1, | 1,7,1,1, | 11,9,9,11, | 9,9,15,9, | 17,19,17,17, | 19,17,17,23, | 25,25,27,25, | 25,31,25,32",
         "scale": 0.5,
+        "normalize": true,
         "weight": 4
     },
     "darkstep fast": {
         "pattern": "1,1,5,1, | 1,13,1,1, | 21,17,17,21, | 17,17,29,32",
         "scale": 0.25,
+        "normalize": true,
         "weight": 4
     },
     "4-3 time": {
@@ -265,6 +268,7 @@
     "Stray & Halogenix - Poison": {
         "pattern": "0:1/3, 0:1/3, 1:4/3, 1:4/3, 2:7/3, 2:7/3, 3:10/3, 3:10/3, 1/3:2/3, 4/3:5/3, 10/3:4",
         "scale": "1",
+        "normalize": true,
         "scale_d": 1,
         "weight": 5
     },
@@ -305,7 +309,7 @@
         },
         "2": {
             "type": "beatsample",
-            "filename": "samples/hardstyle kick.wav"
+            "filename": "samples/cowbell.mp3"
         },
         "weight": 0.000000001
     }

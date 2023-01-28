@@ -1,9 +1,10 @@
-import BeatManipulator as bm, json, copy
+import BeatManipulator as bm, json
 with open("presets.json", "r") as f:
     presets=f.read()
 
 presets=json.loads(presets)
-
+def song_copy(song:bm.song):
+    return bm.song(path=song.path, audio=song.audio, samplerate=song.samplerate, beatmap=song.beatmap, gradio=song.gradio, caching=song.caching,filename=song.filename, copied=True)
 def lib_test(filename,output='', samplerate=44100, lib='madmom.BeatDetectionProcessor', scale=1, shift=0):
     '''basically a way to quickly test scale and offset'''
     if type(filename)==str :
@@ -11,15 +12,7 @@ def lib_test(filename,output='', samplerate=44100, lib='madmom.BeatDetectionProc
         samplerate=song.samplerate
     else:
         song=filename
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_sine(0.1, 2000, samplerate), scale=8*scale, shift=0+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_sine(0.05, 1000, samplerate), scale=8*scale, shift=1*scale+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 500, samplerate), scale=8*scale, shift=2*scale+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 250, samplerate), scale=8*scale, shift=3*scale+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 125, samplerate), scale=8*scale, shift=4*scale+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 250, samplerate), scale=8*scale, shift=5*scale+shift)
-    song.quick_beatsample(output=None, lib=lib, audio2=bm.generate_saw(0.05, 500, samplerate), scale=8*scale, shift=6*scale+shift)
-    song.quick_beatsample(output=output, suffix=' ('+lib+')',lib=lib, audio2=bm.generate_saw(0.05, 1000, samplerate), scale=8*scale, shift=7*scale+shift)
-    del song
+    song.quick_beatswap(output='', pattern='test', scale=scale, shift=shift)
 
 def lib_test_full(filename,samplerate):
     '''A way to test all beat detection modules to see which one performs better.'''
@@ -44,11 +37,15 @@ def process_list(something)-> list:
     return something
 
 def normalize(song: bm.song, beat, pattern=None, scale=None, shift=None):
+    beat=beat.lower()
     if pattern is not None:
         if scale is None: scale=1
         if shift is None: shift=1
         song.quick_beatswap(output=None, pattern=pattern, scale=scale,shift=shift)
+    elif beat=='normal' or beat is None: pass
     elif beat=='shifted': song.quick_beatswap(output=None, pattern='1,2,3,4,5,7,6,8', scale=0.5)
+    elif beat=='shifted2': song.quick_beatswap(output=None, pattern='1,2,3,4,5,6,8,7', scale=0.5)
+    else: print(f"'{beat}' is not a valid beat")
     return song
 
 def process(song:bm.song, preset: str, scale:float, shift:float, random=False, every=False)->bm.song:
@@ -65,7 +62,7 @@ def process(song:bm.song, preset: str, scale:float, shift:float, random=False, e
         elif every is True:
             songs=[]
             for i in pscale:
-                song2=copy.deepcopy(song)
+                song2=song_copy(song)
                 song2.quick_beatswap(output=None, pattern=preset['pattern'], scale=scale*i, shift=shift)
                 songs.append((song2, i))
             return songs
@@ -100,7 +97,7 @@ def use_preset(output:str,song: str, preset: str, presets=presets, scale=1, shif
     name=preset
     if isinstance(preset, str): preset=presets[preset]
     if test is True:
-        testsong=copy.deepcopy(song)
+        testsong=song_copy(song)
         lib_test(testsong, output, samplerate=testsong.samplerate)
         del testsong
     #print(name, preset)
@@ -114,14 +111,20 @@ def use_preset(output:str,song: str, preset: str, presets=presets, scale=1, shif
     else: song=process(song, preset,scale=scale,shift=shift,random=random, every=every)
     if isinstance(song, list): 
         for i in song:
-            i[0].write_audio(output=bm.outputfilename(output, song.filename, suffix=f' ({name}{(" x"+str(round(i[1], 3)))*(len(song)>1)})'))
+            i[0].write_audio(output=bm.outputfilename(output, i[0].filename, suffix=f' ({name}{(" x"+str(round(i[1], 3)))*(len(song)>1)})'))
     else: song.write_audio(output=bm.outputfilename(output,  song.filename, suffix=' ('+name+')'))
 
-def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, beat='normal', test=True):
+def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, beat='normal', test=True, boring=False, effects=False):
+    if boring is False:
+        for i in ['2x faster','3x faster','4x faster','8x faster','1.33x faster','1.5x faster','1.5x slower','reverse','random', 'syncopated effect']:
+            if i in presets: 
+                #print(i)
+                presets.pop(i)
     if not isinstance(filename, bm.song): song=bm.song(filename)
-    song_normalized=normalize(copy.deepcopy(song), beat)
+    else: song=filename
+    song_normalized=normalize(song_copy(song), beat)
     if test is True:
-        testsong=copy.deepcopy(song)
+        testsong=song_copy(song)
         lib_test(testsong, output, samplerate=testsong.samplerate)
         del testsong
     for key, i in presets.items():
@@ -131,11 +134,13 @@ def all(output:str,filename: str, presets:dict=presets, scale=1, shift=0, beat='
             if isinstance(i['scale'], int) or isinstance(i['scale'], float):
                 if i['scale']<0.01:
                     continue
+                if effects is False:
+                    if 'effect - ' in key: continue
         if 'normalize' in i:
             if i['normalize'] is True:
-                song2=copy.deepcopy(song_normalized)
-            else: song2=copy.deepcopy(song)
-        else: song2=copy.deepcopy(song)
+                song2=song_copy(song_normalized)
+            else: song2=song_copy(song)
+        else: song2=song_copy(song)
         use_preset(output, song2, preset=key, presets=presets, scale=scale, shift=shift, beat=beat, test=False, normalize=False, every=True)
 
 def randosu(filename=None):
@@ -166,7 +171,7 @@ import random,os
 
 # ___ beat swap __
 #song=bm.song(filename)
-#song.quick_beatswap(output='', pattern='1,1,1,1,1,1,1,1,8!', scale=0.01, shift=0)
+#song.quick_beatswap(output='', pattern='test', scale=1, shift=0)
 
 # ___ osu ___
 #song=bm.song()

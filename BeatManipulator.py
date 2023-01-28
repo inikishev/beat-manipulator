@@ -59,7 +59,7 @@ def generate_saw(len, freq, samplerate, volume=1):
 def generate_square(len, freq, samplerate, volume=1):
     return ((numpy.linspace(0, freq*2*len, int(len*samplerate)))//1%2 * 2 - 1)*volume
 
-def pitch(audio, pitch, grain):
+def effect_pitch(audio, pitch, grain):
     grain=int(grain)
     if len(audio)>10: audio=[audio]
     if type(audio) is not list: audio=audio.tolist()
@@ -84,7 +84,7 @@ def pitch(audio, pitch, grain):
                 n+=grain
     return audio
 
-def pitchB(audio, pitch, grain):
+def effect_pitchB(audio, pitch, grain):
     grain=int(grain)
     if len(audio)>10: audio=[audio]
     if type(audio) is not list: audio=audio.tolist()
@@ -113,7 +113,7 @@ def pitchB(audio, pitch, grain):
                 n+=grain
     return audio
 
-def grain(audio, grain):
+def effect_grain(audio, grain):
     grain=int(grain)
     if len(audio)>10: audio=[audio]
     if type(audio) is not list: audio=audio.tolist()
@@ -126,22 +126,22 @@ def grain(audio, grain):
     return audio
 
 class song:
-    def __init__(self, filename:str=None, audio:numpy.array=None, samplerate:int=None, beatmap:list=None):
+    def __init__(self, path:str=None, audio:numpy.array=None, samplerate:int=None, beatmap:list=None, gradio=False, caching=True, filename=None, copied=False):
         """song can be loaded from path to an audio file, or from a list/numpy array and samplerate. Audio array should have values from -1 to 1, multiple channels should be stacked vertically. Optionally you can provide your own beat map."""
         self.audio=audio
         self.samplerate=samplerate
-        if filename is None:
+        if path is None:
             from tkinter.filedialog import askopenfilename
-            self.filename = askopenfilename(title='select song')
-            #self.audio, self.samplerate=open_audio(self.filename)
+            self.path = askopenfilename(title='select song')
+            #self.audio, self.samplerate=open_audio(self.path)
         else: 
-            self.filename=filename
+            self.path=path
 
-        if self.filename.lower().endswith('.zip'): 
+        if self.path.lower().endswith('.zip'): 
             import shutil,os
             if os.path.exists('BeatManipulator_TEMP'): shutil.rmtree('BeatManipulator_TEMP')
             os.mkdir('BeatManipulator_TEMP')
-            shutil.unpack_archive(self.filename, 'BeatManipulator_TEMP')
+            shutil.unpack_archive(self.path, 'BeatManipulator_TEMP')
             for root,dirs,files in os.walk('BeatManipulator_TEMP'):
                 for fname in files:
                     if fname.lower().endswith('.mp3') or fname.lower().endswith('.wav') or fname.lower().endswith('.ogg') or fname.lower().endswith('.flac'):
@@ -152,14 +152,17 @@ class song:
             shutil.rmtree('BeatManipulator_TEMP')
     
         if self.audio is None or self.samplerate is None:
-            self.audio, self.samplerate=open_audio(self.filename)
-        
+            self.audio, self.samplerate=open_audio(self.path)
         self.beatmap=beatmap
-        self.filename=self.filename.replace('\\', '/')
+        self.path=self.path.replace('\\', '/')
+        if filename is None: self.filename=path
+        else: self.filename=filename.replace('\\', '/')
         self.samplerate=int(self.samplerate)
-        self.artist = self.filename.split('/')[-1].split(' - ')[0]
-        self.title= '.'.join(self.filename.split('/')[-1].split(' - ')[1].split('.')[:-1])
-        print(f'Loaded {self.artist} - {self.title}; ')
+        self.artist = self.path.split('/')[-1].split(' - ')[0]
+        self.title= '.'.join(self.path.split('/')[-1].split(' - ')[1].split('.')[:-1])
+        self.gradio=gradio
+        self.caching=caching
+        if copied is False: print(f'Loaded {self.artist} - {self.title}; ')
     
     def write_audio(self, output:str, lib:str='auto'):
         """"writes audio"""
@@ -177,7 +180,9 @@ class song:
             soundfile.write(output, audio, self.samplerate)
             del audio
         elif lib=='auto':
-            for i in ('pedalboard.io', 'soundfile'):
+            if self.gradio is True: libs=('soundfile', 'pedalboard.io')
+            else: libs=('pedalboard.io', 'soundfile')
+            for i in libs:
                 try: 
                     song.write_audio(self, output, i)
                     break
@@ -194,6 +199,7 @@ class song:
         #     song.export(output, format=format)
 
     def beatmap_scale(self, scale:float):
+        scale=float(scale)
         
         #print(self.beatmap)
         import math
@@ -217,7 +223,7 @@ class song:
     def analyze_beats(self, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
         print(f'analyzing beats using {lib}; ')
         #if audio is None and filename is None: (audio, samplerate) = open_audio()
-        if caching is True:
+        if caching is True and self.caching is True:
             id=hex(len(self.audio[0]))
             import os
             if not os.path.exists('SavedBeatmaps'):
@@ -314,7 +320,7 @@ class song:
         if lib.split('.')[0]=='madmom':
             self.beatmap=numpy.absolute(self.beatmap-500)
             
-        if caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='%d')
+        if caching is True and self.caching is True: numpy.savetxt(cacheDir, self.beatmap.astype(int), fmt='%d')
         self.bpm=numpy.average(self.beatmap)/self.samplerate
         self.beatmap=self.beatmap.astype(int)
 
@@ -322,7 +328,7 @@ class song:
         print(f'analyzing hits using {lib}; ')
         self.hitlib=lib
         """among us big chungus"""
-        if caching is True:
+        if caching is True and self.caching is True:
             id=hex(len(self.audio[0]))
             import os
             if not os.path.exists('SavedBeatmaps'):
@@ -346,7 +352,7 @@ class song:
                 self.beat_probabilities= mm_proc(predictions)*self.samplerate
                 self.beat_probabilities/= numpy.max(self.beat_probabilities)
 
-            if caching is True: numpy.savetxt(cacheDir, self.beat_probabilities)
+            if caching is True and self.caching is True: numpy.savetxt(cacheDir, self.beat_probabilities)
     
     def osu(self):
         print(f'generating osu file')
@@ -375,7 +381,7 @@ class song:
         osufile=lambda title,artist,version: ("osu file format v14\n"
         "\n"
         "[General]\n"
-        f"AudioFilename: {self.filename.split('/')[-1]}\n"
+        f"AudioFilename: {self.path.split('/')[-1]}\n"
         "AudioLeadIn: 0\n"
         "PreviewTime: -1\n"
         "Countdown: 0\n"
@@ -496,11 +502,11 @@ class song:
                 file+=f'{int(j[1])},{int(j[2])},{str(int(int(j[0])*1000/self.samplerate))},1,0\n'
             with open(f'BeatManipulator_TEMP/{self.artist} - {self.title} [BeatManipulator {difficulty} {self.hitlib}].osu', 'x', encoding="utf-8") as f:
                 f.write(file)
-        if self.filename is not None: 
-            shutil.copyfile(self.filename, 'BeatManipulator_TEMP/'+self.filename.split('/')[-1])
+        if self.path is not None: 
+            shutil.copyfile(self.path, 'BeatManipulator_TEMP/'+self.path.split('/')[-1])
         else: song.write_audio(self,'BeatManipulator_TEMP/audio.mp3')
         shutil.make_archive('BeatManipulator_TEMP', 'zip', 'BeatManipulator_TEMP')
-        os.rename('BeatManipulator_TEMP.zip', outputfilename('', self.filename, '_'+self.hitlib, 'osz'))
+        os.rename('BeatManipulator_TEMP.zip', outputfilename('', self.path, '_'+self.hitlib, 'osz'))
         shutil.rmtree('BeatManipulator_TEMP')
 
 
@@ -540,6 +546,7 @@ class song:
             a+=1
 
     def beatmap_shift(self, shift: float):
+        shift=float(shift)
         if shift!=0: print(f'shift={shift}; ')
         #print(shift)
         length=len(self.beatmap)
@@ -651,8 +658,6 @@ class song:
             return
                     
         #print(len(result[0]))
-
-
         def beatswap_getnum(i: str, c: str):
             if c in i:
                 try: 
@@ -861,12 +866,26 @@ class song:
         if scale!=1: song.beatmap_scale(self,scale)
         if autoinsert is True: song.beatmap_autoinsert(self)
         if start!=0 or end is not None: song.beatmap_trim(self,start, end)
-        song.beatswap(self,pattern)
+        if 'test' in pattern.lower():
+            self.beatmap=save
+            if autoinsert is True: song.beatmap_autoinsert(self)
+            if start!=0 or end is not None: song.beatmap_trim(self,start, end)
+            audio2, samplerate2=open_audio('samples/cowbell.mp3')
+            song.quick_beatsample(self, output=None, audio2=list(i[::3] for i in audio2), scale=8*scale, shift=0+shift)
+            song.quick_beatsample(self, output=None, audio2=list(i[::2] for i in audio2), scale=8*scale, shift=1*scale+shift)
+            song.quick_beatsample(self, output=None, audio2=audio2, scale=8*scale, shift=2*scale+shift)
+            song.quick_beatsample(self, output=None, audio2=numpy.repeat(audio2,2,axis=1), scale=8*scale, shift=3*scale+shift)
+            song.quick_beatsample(self, output=None, audio2=numpy.repeat(audio2,3,axis=1), scale=8*scale, shift=4*scale+shift)
+            song.quick_beatsample(self, output=None, audio2=numpy.repeat(audio2,2,axis=1), scale=8*scale, shift=5*scale+shift)
+            song.quick_beatsample(self, output=None, audio2=audio2, scale=8*scale, shift=6*scale+shift)
+            song.quick_beatsample(self, output=None, audio2=list(i[::2] for i in audio2), scale=8*scale, shift=7*scale+shift)
+
+        else: song.beatswap(self,pattern)
 
         if output is not None:
             if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                output=output+'.'.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                output=output+'.'.join(''.join(self.path.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
             song.write_audio(self,output)
 
         self.beatmap=save
@@ -918,7 +937,7 @@ class song:
         if output is not None:
             if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                output=output+'.'.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                output=output+'.'.join(''.join(self.path.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
             song.write_audio(self,output)
         
         self.beatmap=save
@@ -968,7 +987,7 @@ class song:
         if output is not None:
             if not (output.lower().endswith('.mp3') or output.lower().endswith('.wav') or output.lower().endswith('.flac') or output.lower().endswith('.ogg') or 
             output.lower().endswith('.aac') or output.lower().endswith('.ac3') or output.lower().endswith('.aiff')  or output.lower().endswith('.wma')):
-                output=output+'.'.join(''.join(self.filename.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
+                output=output+'.'.join(''.join(self.path.split('/')[-1]).split('.')[:-1])+suffix+'.mp3'
             song.write_audio(self,output)
         self.beatmap=save
         
