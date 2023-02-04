@@ -20,14 +20,14 @@ else: printe(f'''beatmap assignment error.
 {test.beatmap}''')
 
 test.beatmap_shift(2)
-if list(test.beatmap) == list([0, 1, 2] + beatmap[1:]): printb ('beatmap_shift(2) passed')
+if list(test.beatmap) == beatmap[2:]: printb('beatmap_shift(2) passed')
 else: printe(f'''beatmap_shift(2) error, 1st line is the expected result:
 {[0, 1, 2] + beatmap[1:]}
 {test.beatmap}''')
 
 test.beatmap = beatmap.copy()
 test.beatmap_shift(-2)
-if list(test.beatmap) == beatmap[2:]: printb('beatmap_shift(-2) passed')
+if list(test.beatmap) == list([0, 1, 2] + beatmap[1:]): printb ('beatmap_shift(-2) passed')
 else:printe(f'''beatmap_shift(-2) error, 1st line is the expected result:
 {beatmap[2:]}
 {test.beatmap}''')
@@ -49,7 +49,7 @@ else:printe(f'''beatmap_shift(-0.5) error, 1st line is the expected result:
 {test.beatmap}''')
 
 test.beatmap = beatmap.copy()
-should=[1, 2, 5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 110, 130, 150, 170, 190, 200]
+should=[25, 35, 45, 55, 65, 75, 85, 95, 110, 130, 150, 170, 190, 200]
 test.beatmap_shift(2.5)
 if list(test.beatmap) == should: printb('beatmap_shift(2.5) passed')
 else:printe(f'''beatmap_shift(2.5) error, 1st line is the expected result:
@@ -57,9 +57,9 @@ else:printe(f'''beatmap_shift(2.5) error, 1st line is the expected result:
 {list(test.beatmap)}''')
 
 test.beatmap = beatmap.copy()
-should=[20, 25, 35, 45, 55, 65, 75, 85, 95, 110, 130, 150, 170, 190]
+should=[1, 2, 3, 5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 110, 130, 150, 170, 190]
 test.beatmap_shift(-2.5)
-if list(test.beatmap) == should: printb('beatmap_shift(2.5) passed')
+if list(test.beatmap) == should: printb('beatmap_shift(-2.5) passed')
 else:printe(f'''beatmap_shift(-2.5) error, 1st line is the expected result:
 {should}
 {list(test.beatmap)}''')
@@ -113,7 +113,7 @@ def beatswap_test(number, pattern):
     test2=bm.song(audio=audio2, samplerate=2, beatmap=beatmap2, filename='test2.mp3',log=False)
     test2.beatswap(pattern)
 
-
+input('run time tests?')
 import timeit
 printb(f'beatmap_shift(-2.5) for 1000 beats takes {timeit.timeit(lambda: shift_test(1000,shift=-2.5), number=1)}') #0.0028216999489814043
 printb(f'beatmap_shift(-2.5) for 20000 beats takes {timeit.timeit(lambda: shift_test(20000,shift=-2.5), number=1)}') #0.6304191001690924

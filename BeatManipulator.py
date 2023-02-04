@@ -557,26 +557,29 @@ class song:
         shift=float(shift)
         if shift!=0 and self.log is True: print(f'shift={shift}; ')
         elif shift==0: return
-        if shift>0:
+        if shift<0:
+            shift=-shift # so that floor division works correctly
             # add integer number of beats to the start
             if shift >= 1: self.beatmap=numpy.insert(self.beatmap, 0, list(i+1 for i in range(int(shift//1))))
+            if shift%1!=0:
+                # shift by modulus from the end
+                shift=shift%1
+                for i in reversed(range(len(self.beatmap))):
+                    if i==0: continue
+                    #print(i, ', ',self.beatmap[i], '-', shift, '* (', self.beatmap[i], '-', self.beatmap[i-1],') =', self.beatmap[i] - shift * (self.beatmap[i] - self.beatmap[i-1]))
+                    self.beatmap[i] = int(self.beatmap[i] - shift * (self.beatmap[i] - self.beatmap[i-1]))
+
+        
+        elif shift>0:
+            # remove integer number of beats from the start
+            if shift >= 1: self.beatmap=self.beatmap[int(shift//1):]
             if shift%1!=0:
                 # shift by modulus
                 shift=shift%1
                 for i in range(len(self.beatmap)-int(shift)-1):
                     #print(self.beatmap[i], '+', shift, '* (', self.beatmap[i+1], '-', self.beatmap[i],') =', self.beatmap[i] + shift * (self.beatmap[i+1] - self.beatmap[i]))
                     self.beatmap[i] = int(self.beatmap[i] + shift * (self.beatmap[i+1] - self.beatmap[i]))
-        elif shift<0:
-            shift=-shift # so that floor division works correctly
-            # remove integer number of beats from the start
-            if shift >= 1: self.beatmap=self.beatmap[int(shift//1):]
-            if shift%1!=0:
-                # shift by modulus from the end
-                shift=shift%1
-                for i in reversed(range(len(self.beatmap))):
-                    #print(self.beatmap[i], '-', shift, '* (', self.beatmap[i], '-', self.beatmap[i-1],') =', self.beatmap[i] - shift * (self.beatmap[i] - self.beatmap[i-1]))
-                    if i-shift<0: pass
-                    else: self.beatmap[i] = int(self.beatmap[i] - shift * (self.beatmap[i] - self.beatmap[i-1]))
+        
         self.beatmap=sorted(list(self.beatmap))
         while True:
             n,done=0,[]
@@ -987,6 +990,8 @@ class song:
         save=numpy.copy(self.beatmap)
         if autoscale is True: song.beatmap_autoscale(self)
         if shift!=0: song.beatmap_shift(self,shift)
+        #print(numpy.asarray(save[0:10]))
+        #print(numpy.asarray(self.beatmap[0:10]))
         if scale!=1: song.beatmap_scale(self,scale)
         if autoinsert is True: song.beatmap_autoinsert(self)
         if start!=0 or end is not None: song.beatmap_trim(self,start, end)
