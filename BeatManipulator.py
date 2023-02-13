@@ -1,14 +1,16 @@
 import numpy
 numpy.set_printoptions(suppress=True)
-from ast import literal_eval
+from numba import njit
+from numba.typed import List
+import ast
 def open_audio(filename=None, lib='auto'):
     if filename is None:
         from tkinter.filedialog import askopenfilename
         filename = askopenfilename(title='select song', filetypes=[("mp3", ".mp3"),("wav", ".wav"),("flac", ".flac"),("ogg", ".ogg"),("wma", ".wma")])
     filename=filename.replace('\\', '/')
     if lib=='pedalboard.io':
-        from pedalboard.io import AudioFile
-        with AudioFile(filename) as f:
+        import pedalboard.io
+        with pedalboard.io.AudioFile(filename) as f:
             audio = f.read(f.frames)
             samplerate = f.samplerate
     elif lib=='librosa':
@@ -59,6 +61,10 @@ def generate_saw(len, freq, samplerate, volume=1):
 def generate_square(len, freq, samplerate, volume=1):
     return ((numpy.linspace(0, freq*2*len, int(len*samplerate)))//1%2 * 2 - 1)*volume
 
+def effect_normalize(audio):
+    audio=audio-(numpy.min(audio)+numpy.max(audio))/2
+    return audio*(1-(max(numpy.max(audio), abs(numpy.min(audio)))))
+
 def effect_pitch(audio, pitch, grain):
     grain=int(grain)
     if len(audio)>10: audio=[audio]
@@ -100,6 +106,7 @@ def effect_pitchB(audio, pitch, grain):
                 audio[i][n:n+grain]=numpy.repeat(audio[i][n:n+int(grain/2)], 2)
                 #print(len(audio[i]))
                 n+=grain
+
     elif pitch>1:
         pitch=int(pitch)
         for i in range(len(audio)):
@@ -125,6 +132,196 @@ def effect_grain(audio, grain):
             n+=grain*2
     return audio
 
+def effect_ftt(audio, inverse=True):
+    """headphone warning: cursed effect"""
+    import scipy.fft
+    audio=numpy.asarray(audio).copy()
+    for i in range(len(audio)):
+        if inverse is False:
+            audio[i]= scipy.fft.fft(audio[i], axis=0)
+        else: 
+            audio[i]= scipy.fft.ifft(audio[i], axis=0)
+    audio=(audio*(2/numpy.max(audio)))-1
+    return effect_normalize(audio)
+    
+def effect_fourier_shift(audio, value=5):
+    """modulates volume for some reason"""
+    import scipy.ndimage
+    audio=numpy.asarray(audio).copy()
+    audio= numpy.asarray(list(scipy.ndimage.fourier_shift(i, value, axis=-1) for i in audio)).astype(float)
+    return effect_normalize(audio)
+
+def effect_gradient(audio):
+    """acts as an interesting high pass filter that removes drums"""
+    audio=numpy.asarray(audio).copy()
+    return numpy.gradient(audio, axis=0)
+
+def effect_inverse_gradient(audio):
+    """supposed to be inverse of a gradient, but it just completely destroys the audio into a distorted mess"""
+    audio=numpy.asarray(audio).copy()
+    for i in range(len(audio)):
+        a = audio[i]
+        audio[i] = a[0] + 2 * numpy.c_[numpy.r_[0, a[1:-1:2].cumsum()], a[::2].cumsum() - a[0] / 2].ravel()[:len(a)]
+    audio=effect_normalize(audio)
+    return numpy.gradient(audio, axis=0)
+
+def image_effect_blur(image, value=(5,5)):
+    """similar to echo"""
+    import cv2
+    if isinstance(value, int) or isinstance(value, float): value = (value,value)
+    image=cv2.blur(image,value)
+    return image
+
+def image_effect_median(image, value=5):
+    """similar to echo"""
+    import scipy.signal
+    image=scipy.signal.medfilt2d(image,value)
+    return image
+
+def image_effect_uniform(image, value=5):
+    """similar to echo"""
+    import scipy.ndimage
+    image= scipy.ndimage.uniform_filter(image,value)
+    return image
+
+def image_effect_fourier_shift1d(image, value=5):
+    """quickly modulates volume for some reason"""
+    import scipy.ndimage
+    image=scipy.ndimage.fourier_shift(image,value, axis=1)
+    return image
+
+def image_effect_fourier_shift2d(image, value=5):
+    """very weird effect, mostly produces silence"""
+    import scipy.ndimage
+    image= scipy.ndimage.fourier_gaussian(image,value)
+    image=image*(255/numpy.max(image))
+    return image
+
+def image_effect_spline(image, value=3):
+    """barely noticeable echo"""
+    import scipy.ndimage
+    image= scipy.ndimage.spline_filter(image,value)
+    return image
+
+def image_effect_rotate(image, value=0.1):
+    """roatates image in degrees"""
+    import scipy.ndimage
+    image= scipy.ndimage.rotate(image,value)
+    return image
+
+def image_effect_shapren(image, value=3):
+    """sharpens image"""
+    import scipy.ndimage
+    blurred_f = scipy.ndimage.gaussian_filter(image, value)
+    filter_blurred_f = scipy.ndimage.gaussian_filter(blurred_f, 1)
+    sharpened = blurred_f + 30 * (blurred_f - filter_blurred_f)
+    sharpened=sharpened*(255/numpy.max(sharpened))
+    return sharpened
+
+def mix_shuffle_approx_random(audio1, audio2, iterations, minlength=0, maxlength=None, bias=0):
+    import random
+    if isinstance(audio1, song): 
+        minlength*=audio1.samplerate
+        if maxlength is not None: maxlength*=audio1.samplerate
+        audio1=audio1.audio
+    else:
+        minlength*=44100
+        if maxlength is not None: maxlength*=44100
+    if isinstance(audio2, song): audio2=audio2.audio
+    if len(audio1)>16: audio1=numpy.asarray([audio1,audio1])
+    if len(audio2)>16: audio1=numpy.asarray([audio2,audio2])
+    shape2=len(audio2)
+    mono1=numpy.abs(numpy.gradient(audio1[0]))
+    mono2=numpy.abs(numpy.gradient(audio2[0]))
+    length1=len(mono1)
+    length2=len(mono2)
+    result=numpy.zeros(shape=(shape2, length2))
+    result_diff=numpy.zeros(shape=length2)
+    old_difference=numpy.sum(mono2)
+    random_result=result_diff.copy()
+    for i in range(iterations):
+        rstart=random.randint(0, length1)
+        if maxlength is not None:
+            rlength=random.randint(minlength, min(length1-rstart, maxlength))
+        else: rlength=random.randint(minlength, minlength+length1-rstart)
+        rplace=random.randint(0, length2-rlength)
+        random_result=numpy.array(result_diff, copy=True)
+        random_result[rplace:rplace + rlength] = mono1[rstart:rstart + rlength]
+        difference = numpy.sum(numpy.abs(mono2 - random_result))
+        if difference<old_difference-bias:
+            print(i, difference)
+            result[:, rplace:rplace + rlength] = audio1[:, rstart:rstart + rlength]
+            result_diff=random_result
+            old_difference = difference
+    return result
+# 10 5 4 1
+# 10 0 0 0
+# 0  5 4 1 10
+# 10 5 4 1
+# 10 5 4 1
+
+#@njit SLOWER
+def detect_bpm(audio, samplerate, bpm_low=40, bpm_high=300, bpm_step=0.1, mode=1, shift_step=10):
+    """A very slow and inefficient algorithm!"""
+    audio = numpy.asarray(audio)
+    audio = (audio[0] + audio[1]).astype(numpy.float32)
+    length=len(audio)
+    mlength=length- int( 1 / ((bpm_low / 60) / samplerate) )  # to make sure those parts do not affect the calculation as they will be cut sometimes
+    #audio[:int(spb_low)]=0 # to make sure those parts do not affect the calculation as they will be cut sometimes
+    bpmdiffs=[]
+    bpmdiffsi=[]
+    minimum=100000000
+    for i in range(int((bpm_high-bpm_low)/bpm_step)):
+        spb=int(round(1/(((bpm_low + i*bpm_step) / 60) / samplerate)))
+        # audio is reshaped into a 2d array with bpm
+        end=-int(length % spb)
+        if end == 0: end = length
+        image = audio[:end].reshape(-1, spb)
+        if mode == 1: image=image.T
+        # diff21, diff22, diff41, diff42 = image[:-2].flatten(), image[2:].flatten(), image[:-4].flatten(), image[4:].flatten()
+        # difference=abs( numpy.dot(diff21, diff22)/(numpy.linalg.norm(diff21)*numpy.linalg.norm(diff22)) + numpy.dot(diff41, diff42)/(numpy.linalg.norm(diff41)*numpy.linalg.norm(diff42)) )
+        diff2=numpy.abs ( (image[:-2] - image[2:]).flatten()[:mlength] )
+        diff4=numpy.abs ( (image[:-4] - image[4:]).flatten()[:mlength] )
+        difference=numpy.sum(diff2*diff2*diff2*diff2) + numpy.sum(diff4*diff4*diff4*diff4)
+        # for i in range(len(image)-1):
+        #     difference.append(numpy.sum(image[i]-image[i]+1))
+        if mode == 3: 
+            image=image.T
+            diff2=numpy.abs ( (image[:-2] - image[2:]).flatten()[:mlength] )
+            diff4=numpy.abs ( (image[:-4] - image[4:]).flatten()[:mlength] )
+            difference=numpy.sum(diff2*diff2*diff2*diff2) + numpy.sum(diff4*diff4*diff4*diff4)
+        bpmdiffs.append(spb)
+        bpmdiffsi.append(difference)
+        if difference<minimum: 
+            #print(f'{spb}: testing BPM = {(1/spb)*60*samplerate}; value = {difference}')
+            print(i)
+            minimum=difference
+    spb = bpmdiffs[numpy.argmin(numpy.asarray(bpmdiffsi))]
+    #print(f'BPM = {(1/spb)*60*samplerate}')
+    bpmdiffs=[]
+    bpmdiffsi=[]
+    #audio[int(spb):]=0
+    print(spb)
+    for shift in range(0, spb, shift_step):
+        #print(shift)
+        end=-int(length % spb)
+        if end == 0: end = length+shift
+        image = audio[shift:end].reshape(-1, spb)
+        length-=shift_step
+        if mode == 1: image=image.T
+        diff =  numpy.abs ( (image[:-1] - image[1:]).flatten()[:mlength] )
+        difference=numpy.sum(diff*diff)
+        if mode == 3: 
+            image=image.T
+            diff =  numpy.abs ( (image[:-1] - image[1:]).flatten()[:mlength] )
+            difference += numpy.sum(diff*diff)
+        bpmdiffs.append(shift)
+        bpmdiffsi.append(difference)
+        #if shift%1000==0: print(f'testing shift = {shift}; value = {difference}')
+    shift = bpmdiffs[numpy.argmin(numpy.asarray(bpmdiffsi))]
+    #print(f'BPM = {(1/spb)*60*samplerate}; shift = {shift/samplerate} sec.')
+    return numpy.arange(shift, length, spb)
+    
 class song:
     def __init__(self, path:str=None, audio:numpy.array=None, samplerate:int=None, beatmap:list=None, caching=True, filename=None, copied=False, log=True):
         """song can be loaded from path to an audio file, or from a list/numpy array and samplerate. Audio array should have values from -1 to 1, multiple channels should be stacked vertically. Optionally you can provide your own beat map."""
@@ -156,7 +353,7 @@ class song:
             self.audio, self.samplerate=open_audio(self.path)
 
         if len(self.audio)>16:
-            self.audio=(self.audio,self.audio)
+            self.audio=numpy.asarray((self.audio,self.audio))
 
         self.beatmap=beatmap
         self.path=self.path.replace('\\', '/')
@@ -172,18 +369,33 @@ class song:
         self.caching=caching
         self.log=log
         if copied is False and self.log is True: print(f'Loaded {self.artist} - {self.title}; ')
+        self.audio_isarray = True
     
+    def printlog(self, string, end=None):
+        if self.log is True:
+            if end is None: print(string)
+            else:print(string,end=end)
+    
+    def _audio_tolist(self):
+        if self.audio_isarray:
+            self.audio = self.audio.tolist()
+            self.audio_isarray = False
+
+    def _audio_toarray(self):
+        if not self.audio_isarray:
+            self.audio = numpy.asarray(self.audio)
+            self.audio_isarray = True
+
     def write_audio(self, output:str, lib:str='auto', libs=('pedalboard.io', 'soundfile')):
         """"writes audio"""
-        if lib!='auto' and self.log is True: print(f'writing {output} with {lib}')
+        self._audio_toarray()
+        if lib!='auto': song.printlog(self, f'writing {output} with {lib}')
         if lib=='pedalboard.io':
-            if not isinstance(self.audio,numpy.ndarray): self.audio=numpy.asarray(self.audio)
             #print(audio)
-            from pedalboard.io import AudioFile
-            with AudioFile(output, 'w', self.samplerate, self.audio.shape[0]) as f:
+            import pedalboard.io
+            with pedalboard.io.AudioFile(output, 'w', self.samplerate, self.audio.shape[0]) as f:
                 f.write(self.audio)
         elif lib=='soundfile':
-            if not isinstance(self.audio,numpy.ndarray): self.audio=numpy.asarray(self.audio)
             audio=self.audio.T
             import soundfile
             soundfile.write(output, audio, self.samplerate)
@@ -228,7 +440,7 @@ class song:
             self.beatmap=b
 
     def analyze_beats(self, lib='madmom.BeatDetectionProcessor', caching=True, split=None):
-        if self.log is True: print(f'analyzing beats using {lib}; ')
+        if self.log is True: print(f'analyzing beats using {lib}; ', end='')
         #if audio is None and filename is None: (audio, samplerate) = open_audio()
         if caching is True and self.caching is True:
             id=hex(len(self.audio[0]))
@@ -239,8 +451,10 @@ class song:
             try: 
                 self.beatmap=numpy.loadtxt(cacheDir, dtype=int)
                 self.bpm=numpy.average(self.beatmap)/self.samplerate
+                if self.log is True: print('loaded cached beatmap.')
                 return
-            except OSError: pass
+            except OSError: 
+                if self.log is True:print("beatmap hasn't been generated yet. Generating...")
 
         if lib.split('.')[0]=='madmom':
             from collections.abc import MutableMapping, MutableSequence
@@ -320,8 +534,8 @@ class song:
 
         elif lib=='split':
             self.beatmap= list(range(0, len(self.audio), len(self.audio)//split))
-        elif lib=='split':
-            self.beatmap= list(range(0, len(self.audio), len(self.audio)//split))
+        elif lib=='stunlocked':
+            self.beatmap = detect_bpm(self.audio, self.samplerate)
 
 
         if lib.split('.')[0]=='madmom':
@@ -612,13 +826,13 @@ class song:
                     if i.isdigit() or i=='.' or i=='-' or i=='/' or i=='+' or i=='%': s=str(s)+str(i)
                     elif i==':':
                         if s=='': s='0'
-                        #print(s, literal_eval(s))
-                        size=max(math.ceil(float(literal_eval(s))), size)
+                        #print(s, ast.literal_eval(s))
+                        size=max(math.ceil(float(ast.literal_eval(s))), size)
                         s=''
                     elif s!='': break
                 if s=='': s='0'
             if s=='': s='0'
-            size=max(math.ceil(float(literal_eval(s))), size)
+            size=max(math.ceil(float(ast.literal_eval(s))), size)
 
         if isinstance(self.audio,numpy.ndarray): self.audio=numpy.ndarray.tolist(self.audio)
         if isinstance(self.beatmap, list): self.beatmap=numpy.asarray(self.beatmap, dtype=int)
@@ -699,8 +913,8 @@ class song:
                         
                         # If character is : - get start
                         elif s!='' and c==':':
-                            #print ('Beat start:',s,'=', literal_eval(s),'=',int(literal_eval(s)//1), '+',j,'*',size,'    =',int(literal_eval(s)//1)+j*size, ',   mod=',literal_eval(s)%1)
-                            try: st=self.beatmap[int(literal_eval(s)//1)+j*size ] + literal_eval(s)%1* (self.beatmap[int(literal_eval(s)//1)+j*size +1] - self.beatmap[int(literal_eval(s)//1)+j*size])
+                            #print ('Beat start:',s,'=', ast.literal_eval(s),'=',int(ast.literal_eval(s)//1), '+',j,'*',size,'    =',int(ast.literal_eval(s)//1)+j*size, ',   mod=',ast.literal_eval(s)%1)
+                            try: st=self.beatmap[int(ast.literal_eval(s)//1)+j*size ] + ast.literal_eval(s)%1* (self.beatmap[int(ast.literal_eval(s)//1)+j*size +1] - self.beatmap[int(ast.literal_eval(s)//1)+j*size])
                             except IndexError: break
                             s=''
                         
@@ -709,18 +923,18 @@ class song:
 
                             # start already exists
                             if st is not None:
-                                #print ('Beat end:  ',s,'=', literal_eval(s),'=',int(literal_eval(s)//1), '+',j,'*',size,'    =',int(literal_eval(s)//1)+j*size, ',   mod=',literal_eval(s)%1)
+                                #print ('Beat end:  ',s,'=', ast.literal_eval(s),'=',int(ast.literal_eval(s)//1), '+',j,'*',size,'    =',int(ast.literal_eval(s)//1)+j*size, ',   mod=',ast.literal_eval(s)%1)
                                 try:
-                                    s=self.beatmap[int(literal_eval(s)//1)+j*size ] + literal_eval(s)%1* (self.beatmap[int(literal_eval(s)//1)+j*size +1] - self.beatmap[int(literal_eval(s)//1)+j*size])
+                                    s=self.beatmap[int(ast.literal_eval(s)//1)+j*size ] + ast.literal_eval(s)%1* (self.beatmap[int(ast.literal_eval(s)//1)+j*size +1] - self.beatmap[int(ast.literal_eval(s)//1)+j*size])
                                     #print(s)
                                 except IndexError: break
                             else:
                                 # start doesn't exist
-                                #print ('Beat start:',s,'=', literal_eval(s),'=',int(literal_eval(s)//1), '+',j,'*',size,'- 1 =',int(literal_eval(s)//1)+j*size,   ',   mod=',literal_eval(s)%1)
-                                #print ('Beat end:  ',s,'=', literal_eval(s),'=',int(literal_eval(s)//1), '+',j,'*',size,'    =',int(literal_eval(s)//1)+j*size+1, ',   mod=',literal_eval(s)%1)
+                                #print ('Beat start:',s,'=', ast.literal_eval(s),'=',int(ast.literal_eval(s)//1), '+',j,'*',size,'- 1 =',int(ast.literal_eval(s)//1)+j*size,   ',   mod=',ast.literal_eval(s)%1)
+                                #print ('Beat end:  ',s,'=', ast.literal_eval(s),'=',int(ast.literal_eval(s)//1), '+',j,'*',size,'    =',int(ast.literal_eval(s)//1)+j*size+1, ',   mod=',ast.literal_eval(s)%1)
                                 try:
-                                    st=self.beatmap[int(literal_eval(s)//1)+j*size-1 ] + literal_eval(s)%1* (self.beatmap[int(literal_eval(s)//1)+j*size +1] - self.beatmap[int(literal_eval(s)//1)+j*size])
-                                    s=self.beatmap[int(literal_eval(s)//1)+j*size ] + literal_eval(s)%1* (self.beatmap[int(literal_eval(s)//1)+j*size +1] - self.beatmap[int(literal_eval(s)//1)+j*size])
+                                    st=self.beatmap[int(ast.literal_eval(s)//1)+j*size-1 ] + ast.literal_eval(s)%1* (self.beatmap[int(ast.literal_eval(s)//1)+j*size +1] - self.beatmap[int(ast.literal_eval(s)//1)+j*size])
+                                    s=self.beatmap[int(ast.literal_eval(s)//1)+j*size ] + ast.literal_eval(s)%1* (self.beatmap[int(ast.literal_eval(s)//1)+j*size +1] - self.beatmap[int(ast.literal_eval(s)//1)+j*size])
                                 except IndexError: break
                             
                             if st>s: 
@@ -740,25 +954,25 @@ class song:
                             z=beatswap_getnum(i,'c')
                             if z is not None:
                                 if z=='': beat[0],beat[1]=beat[1],beat[0]
-                                elif literal_eval(z)==0:beat[0]*=0
+                                elif ast.literal_eval(z)==0:beat[0]*=0
                                 else:beat[1]*=0
 
                             # volume
                             z=beatswap_getnum(i,'v')
                             if z is not None:
                                 if z=='': z='0'
-                                beat*=literal_eval(z)
+                                beat*=ast.literal_eval(z)
 
                             z=beatswap_getnum(i,'t')
                             if z is not None:
                                 if z=='': z='2'
-                                beat**=1/literal_eval(z)
+                                beat**=1/ast.literal_eval(z)
 
                             # speed
                             z=beatswap_getnum(i,'s')
                             if z is not None:
                                 if z=='': z='2'
-                                z=literal_eval(z)
+                                z=ast.literal_eval(z)
                                 if z<1: 
                                     beat=numpy.asarray((numpy.repeat(beat[0],int(1//z)),numpy.repeat(beat[1],int(1//z))))
                                 else:
@@ -768,7 +982,7 @@ class song:
                             z=beatswap_getnum(i,'b')
                             if z is not None:
                                 if z=='': z='3'
-                                z=1/literal_eval(z)
+                                z=1/ast.literal_eval(z)
                                 if z<1: beat=beat*z
                                 beat=numpy.around(beat, max(int(z), 1))
                                 if z<1: beat=beat/z
@@ -777,7 +991,7 @@ class song:
                             z=beatswap_getnum(i,'d')
                             if z is not None:
                                 if z=='': z='3'
-                                z=int(literal_eval(z))
+                                z=int(ast.literal_eval(z))
                                 beat=numpy.asarray((numpy.repeat(beat[0,::z],z),numpy.repeat(beat[1,::z],z)))
 
                             # convert to list
@@ -1009,52 +1223,81 @@ class song:
         import librosa
         self.spectogram=librosa.feature.melspectrogram(y=self.audio, sr=self.samplerate, hop_length=hop_length)
 
+    def spectogram_effect(self, effect, *args, **kwargs):
+        song.printlog(self,f'applying spectogram effect: {effect.__name__} with {args}, {kwargs}; ')
+        self.spectogram=list(effect(i, *args, **kwargs) for i in self.spectogram)
+    
+    def spectogram_write(self,output, channels='combine'):
+        song.printlog(self,'writing spectogram; ')
+        import cv2
+        if channels.lower().startswith('l'): image=self.spectogram[0]
+        elif channels.lower().startswith('r'): image=self.spectogram[1]
+        else: image=(self.spectogram[0]+self.spectogram[1])/2
+        cv2.imwrite(output, image)
+
     def spectogram_audio(self):
         import librosa
         self.audio=librosa.feature.inverse.mel_to_audio(M=numpy.swapaxes(numpy.swapaxes(numpy.dstack(( self.spectogram[0,:,:],  self.spectogram[1,:,:])), 0, 2), 1,2), sr=self.samplerate, hop_length=self.hop_length)
 
-    def write_image(self):
-        """Turns song into an image based on beat positions. Currently semi-broken"""
+    def audio_beatimage(self, mode='maximum'):
+        song.printlog(self,'generating beat-image; ')
+        """Turns song into an image based on beat positions."""
+        mode=mode.lower()
+        if isinstance(self.audio,numpy.ndarray): self.audio=numpy.ndarray.tolist(self.audio)
+        # add the bits before first beat
+        self.image=([self.audio[0][0:self.beatmap[0]],], [self.audio[1][0:self.beatmap[0]],])
+        # maximum is needed to make the array homogeneous
+        maximum=self.beatmap[0]
+        values=[]
+        values.append(self.beatmap[0])
+        for i in range(len(self.beatmap)-1):
+            self.image[0].append(self.audio[0][self.beatmap[i]:self.beatmap[i+1]])
+            self.image[1].append(self.audio[1][self.beatmap[i]:self.beatmap[i+1]])
+            maximum = max(self.beatmap[i+1]-self.beatmap[i], maximum)
+            values.append(self.beatmap[i+1]-self.beatmap[i])
+        if 'max' in mode: norm=maximum
+        elif 'med' in mode: norm=numpy.median(values)
+        elif 'av' in mode: norm=numpy.average(values)
+        for i in range(len(self.image[0])):
+            beat_diff=int(norm-len(self.image[0][i]))
+            if beat_diff>0:
+                self.image[0][i].extend([numpy.nan]*beat_diff)
+                self.image[1][i].extend([numpy.nan]*beat_diff)
+            elif beat_diff<0:
+                self.image[0][i]=self.image[0][i][:beat_diff]
+                self.image[1][i]=self.image[1][i][:beat_diff]
+        self.image=numpy.asarray(self.image)*255
+        self.image_combined=numpy.add(self.image[0], self.image[1])/2
+
+    def beatimage_effect(self, effect, *args, **kwargs):
+        song.printlog(self,f'applying beat-image effect: {effect.__name__} with {args}, {kwargs}; ')
+        self.image=numpy.nan_to_num(self.image)
+        self.image=list(effect(i, *args, **kwargs) for i in self.image)
+
+    def beatimage_audio(self):
+        song.printlog(self,'converting beat-image to audio')
+        image=numpy.asarray(self.image)/255
+        audio=list([] for i in range(len(image)))
+        #print(audio)
+        for j in range(len(image)):
+            for i in range(len(image[j])):
+                beat=image[j][i]
+                beat=beat[~numpy.isnan(beat)]
+                audio[j].extend(beat)
+        self.audio=audio
+    
+    def beatimage_write(self,output, channels='combine', rotate=True, mode='square', maximum=4096):
+        song.printlog(self,'writing beat-image; ')
         import cv2
-        audio=self.audio[0].tolist()
-        height=len(audio)/len(self.beatmap)
-        width=len(self.beatmap)
-        height*=3
-        if height>width:
-            increase_length=int(height/width)
-            reduce_width=1
-        else: 
-            reduce_width=int(width/height)
-            increase_length=1
-        increase_length/=10
-        reduce_width*=10
-        image=[audio[0:self.beatmap[0]]]
-        maximum=len(image)
-        for i in range(len(self.beatmap)-1):
-            image.append(audio[self.beatmap[i]:self.beatmap[i+1]])
-            maximum=max(maximum,len(image[i]))
-        for i in range(len(image)):
-            image[i].extend((maximum-len(image[i]))*[0])
-            image[i]=image[i][::reduce_width]
-
-        audio=self.audio[1].tolist()
-        image2=[audio[0:self.beatmap[0]]]
-        for i in range(len(self.beatmap)-1):
-            image2.append(audio[self.beatmap[i]:self.beatmap[i+1]])
-        for i in range(len(image2)):
-            image2[i].extend((maximum-len(image2[i]))*[0])
-            image2[i]=image2[i][::reduce_width]
-            print(len(image[i]), len(image2[i]))
-
-        image=numpy.asarray(image)*255
-        image2=numpy.asarray(image2)*255
-        image3=numpy.add(image, image2)/2
-        image,image2,image3=numpy.repeat(image,increase_length,axis=0),numpy.repeat(image2,increase_length,axis=0),numpy.repeat(image3,increase_length,axis=0)
-        image=cv2.merge([image.T,image2.T, image3.T])
-
-        #image=image.astype('uint8')
-        #image=cv2.resize(image, (0,0), fx=len(image))
-        cv2.imwrite('cv2_output.png', image)
+        if channels.lower().startswith('l'): image=self.image[0]
+        elif channels.lower().startswith('r'): image=self.image[1]
+        else: image=self.image_combined
+        if mode.lower()=='square':
+            y=min(len(image), len(image[1]), maximum)
+            y=max(y, maximum)
+            image = cv2.resize(image, (y,y), interpolation=cv2.INTER_NEAREST)
+        if rotate is True: image=image.T
+        cv2.imwrite(output, image)
 
 def fix_beatmap(filename, lib='madmom.BeatDetectionProcessor', scale=1, shift=0):
     if scale==1 and shift==0:
@@ -1091,3 +1334,4 @@ def delete_beatmap(filename, lib='madmom.BeatDetectionProcessor'):
     else: 
         os.remove(cacheDir)
         print('Beatmap deleted.')
+
