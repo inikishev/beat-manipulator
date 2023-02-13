@@ -1,8 +1,6 @@
 import numpy
 numpy.set_printoptions(suppress=True)
-from numba import njit
-from numba.typed import List
-import ast
+
 def open_audio(filename=None, lib='auto'):
     if filename is None:
         from tkinter.filedialog import askopenfilename
