@@ -1,4 +1,4 @@
-# **IDK HOW TO MAKE THIS INTO EXE FILE SO THAT ACTUAL PEOPLE CAN USE IT AS WELL SORRY GAMERS**
+(Никишев И.О.)
 Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom)
 
 # Requirements
