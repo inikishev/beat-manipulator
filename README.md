@@ -77,8 +77,6 @@ There is more stuff. I will write how to use that later
 
 # Notes
 - libraries used - `madmom` for beat detection, `librosa` and `pedalboard.io` for import/export, `numpy` for some effects
-- this was coded by Big ounce, gort and Quandale dingle
-- will work on python 3.9 and 3.8, maybe lower. It should work on higher versions as well, but madmom doesn't.
 
 # Installing requirements
 ### pip
