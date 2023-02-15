@@ -1,6 +1,6 @@
 (Никишев И.О.)
 
-Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom). Effortlessly make "every other beat is missing" remixes, or completely change beat of the song with patterns as complex you want.
+Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom). Effortlessly make "every other beat is missing" remixes, or completely change beat of the song with patterns as complex you want. Additional remixing features include putting samples and fake sidechain on each beat.
 
 # Requirements
 - tested on python 3.10, 3.9 and 3.8. Note that currently only github version of madmom seems to work on 3.10 (at least I couldn't get pip version to work on 3.10).
