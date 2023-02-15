@@ -82,11 +82,11 @@ There is more stuff. I will write how to use that later
 
 # Installing requirements
 ### pip
-- `pip install numpy cython soundfile ffmpeg-python pedalboard`
+- `pip install numpy cython soundfile ffmpeg-python pedalboard librosa`
 - `pip install madmom`
 ### conda
 - you need conda forge channel: `conda config --append channels conda-forge`
 - some requirements are pip only, so you might want to create a new environment
-- `conda install pip cython mido numpy scipy pysoundfile ffmpeg pytest pyaudio pyfftw`
+- `conda install pip cython mido numpy scipy pysoundfile librosa ffmpeg pytest pyaudio pyfftw`
 - either `pip install madmom pedalboard`, or follow https://github.com/CPJKU/madmom instructions for manual install if you are on 3.10
 - You will have exactly 2 pip packages, madmom and pedalboard, all dependencies will be from conda.
