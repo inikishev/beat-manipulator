@@ -1,0 +1,9 @@
+__pycache__/
+**/__pycache__/
+beat_manipulator/beatmaps/
+1/
+flagged/
+*.mp3
+*.wav
+*.flac
+*.png
