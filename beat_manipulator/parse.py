@@ -113,22 +113,24 @@ def parse(pattern:str, samples:dict, pattern_length:int = None,
         # If character is not math/shuffle, that means math expression has ended. Now it tries to figure out where the expression belongs, 
         # and parses the further characters
         else:
-            #print(len(beats), current_beat, num, sample_toadd is None)
-
+            
             # If the beat has not been added, it adds the beat. Also figures out pattern length.
             if len(beats) == current_beat and len(num) > 0:
                 # Checks all slice characters in the beat expression. If slice character is found, splits the slice and breaks.
                 for c in c_slice:
                     if c in num:
                         num = num.split(c)[:2] + [c]
-                        if pattern_length is None and c_misc[6] not in separated[current_beat-1]:
+                        #print(f'slice: split num by `{c}`, num = {num}, whole beat is {separated[current_beat]}')
+                        if pattern_length is None and c_misc[6] not in separated[current_beat]:
                             num0, num1 = utils._safer_eval(num[0]), utils._safer_eval(num[1])
                             if c == c_slice[0]: length = max(num0, num1, length)
                             if c == c_slice[1]: length = max(num0-1, num0+num1-1, length)
                             if c == c_slice[2]: length = max(num0-num1, num0, length)
                         break
                 # If it didn't break, the expression is not a slice, so it pattern length is just compared with the beat number.
-                else: length = max(utils._safer_eval(num), length)
+                else: 
+                    #print(f'single beat: {num}. Whole beat is {separated[current_beat]}')
+                    if c_misc[6] not in separated[current_beat]: length = max(utils._safer_eval(num), length)
 
                 # If there no sample saved in `sample_toadd`, adds the beat to list of beats.
                 if sample_toadd is None: beats.append([num, []])

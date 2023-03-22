@@ -340,7 +340,8 @@ class song:
                 
                 # Makes sure beat doesn't get added on top of previous beat multiple times when pattern is out of range of song beats, to avoid distorted end.
                 elif tries<2:
-                    # Separator is `;` - always use first beat length
+
+                    # Separator is `;` - always use first beat length, normalizes volume to 1.5
                     if operators[num] == c_join[1]:
                         length = len(beat[0])
                         prev_length = len(result[-1][0])
@@ -348,6 +349,9 @@ class song:
                             result[-1] += beat[:,:prev_length]
                         else:
                             result[-1][:,:length] += beat
+                        limit = np.max(result[-1])
+                        if limit > 1.5:
+                            result[-1] /= limit*0.75
                     
                     # Separator is `~` - cuts to shortest
                     elif operators[num] == c_join[2]:
@@ -365,7 +369,7 @@ class song:
                             result[-1][:,:length] += beat
 
                     # Separator is `^` - uses first beat length and multiplies beats, used for sidechain
-                    if operators[num] == c_join[4]:
+                    elif operators[num] == c_join[4]:
                         length = len(beat[0])
                         prev_length = len(result[-1][0])
                         if length > prev_length: 
@@ -373,20 +377,9 @@ class song:
                         else:
                             result[-1][:,:length] *= beat
 
-                    # Separator is `$` - always use first beat length, normalizes volume to 1.5
-                    if operators[num] == c_join[5]:
-                        length = len(beat[0])
-                        prev_length = len(result[-1][0])
-                        if length > prev_length: 
-                            result[-1] += beat[:,:prev_length]
-                        else:
-                            result[-1][:,:length] += beat
-                        limit = np.max(result[-1])
-                        if limit > 1.5:
-                            result[-1] /= limit*0.75
 
-                    # Separator is `}` - always use first beat length, additionally sidechains first beat by second
-                    if operators[num] == c_join[6]:
+                    # Separator is `$` - always use first beat length, additionally sidechains first beat by second
+                    elif operators[num] == c_join[5]:
                         from . import effects
                         length = len(beat[0])
                         prev_length = len(result[-1][0])
@@ -396,6 +389,17 @@ class song:
                         else:
                             result[-1][:,:length] *= effects.to_sidechain(beat)
                             result[-1][:,:length] += beat
+
+                    # Separator is `}` - always use first beat length
+                    elif operators[num] == c_join[6]:
+                        length = len(beat[0])
+                        prev_length = len(result[-1][0])
+                        if length > prev_length: 
+                            result[-1] += beat[:,:prev_length]
+                        else:
+                            result[-1][:,:length] += beat
+
+
         # smoothing
         for i in range(len(result)-1):
             current1 = result[i][0][-2]
