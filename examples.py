@@ -8,4 +8,4 @@ song = path + song
 
 #bm.beatswap(song, 'test', scale = 1, shift = 0)
 
-bm.presets.use(song = song, preset = '3 bars mix')
+bm.presets.use(song = song, preset = 'reverse mix')
