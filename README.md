@@ -111,9 +111,9 @@ The difference is, instead of using quotes, for songs you use square brackets: `
 - `%` - for very advanced patterns you can create variables from various metrics. For example, `%v` will create a variable with average volume of that beat, and all following `%` will be replaced by that variable until you create a new one. Useful for applying different effects based on different song metrics. All metrics are in `beat_manipulator/metrics.py`.
 #### special patterns
 You can write special commands into the `pattern` argument instead of actual patterns:
-`reverse` - plays all beats in reverse chronological order
-`shuffle` - shuffles all beats
-`test` - puts different pitched cowbells on each beat, useful for testing beat detection and adjusting it using scale and shift. Each cowbell is 1 beat, highest pitched cowbell is the 1st beat, lowest pitched - 4th.
+- `reverse` - plays all beats in reverse chronological order
+- `shuffle` - shuffles all beats
+- `test` - puts different pitched cowbells on each beat, useful for testing beat detection and adjusting it using scale and shift. Each cowbell is 1 beat, highest pitched cowbell is the 1st beat, lowest pitched - 4th.
 
 ### creating images
 You can create cool images based on beat positions. Each song produces its own unique image. Write:
