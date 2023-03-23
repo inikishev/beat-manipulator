@@ -127,8 +127,8 @@ your_song.image_write()
 The image will by default be resized to 4096x4096. It is also possible to export original image, which usually is too big for most image viewers to handle it. However the cool thing is that you can apply image effects to it, and then turn it back into audio. I will soon add info on how to do that.
 
 ### quick functions
-`bm.beatswap(song = 'path or numpy array', pattern = '1,3,2,4', scale=1, shift=0, output='')` - allows you to beatswap and write a song loaded from path or numpy array in one line. Also returns path to the output.
-bm.image(song = 'path or numpy array', max_size = 4096, scale=1, shift=0, output='') - creates an image and writes it in one line.
+- `bm.beatswap(song = 'path or numpy array', pattern = '1,3,2,4', scale=1, shift=0, output='')` - allows you to beatswap and write a song loaded from path or numpy array in one line. Returns path to the exported beatswapped song file.
+- `bm.image(song = 'path or numpy array', max_size = 4096, scale=1, shift=0, output='')` - creates an image and writes it in one line, returns path to exported image.
 
 ### patterns
 some cool patterns are in `beat_manipulator/presets.yaml` file. Those are supposed to be used on normalized beat maps, where kick + snare is two beats, so make sure to adjust beatmaps using `scale` and `shift`.
