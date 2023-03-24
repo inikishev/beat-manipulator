@@ -3,7 +3,7 @@ Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom).
 ### [Try on Hugging Face](https://huggingface.co/spaces/dpe1/BeatManipulator)
 ### [Try on Google Colab](https://colab.research.google.com/drive/1gEsZCCh2zMKqLmaGH5BPPLrImhEGVhv3?usp=sharing)
 
-## Installation
+## installation
 For most people I recommend using Hugging Face or Google Colab. However if you want to run it locally and have access to more advanced features, here is how to do that.
 1. Use python 3.8 - 3.10 (I use 3.9)
 2. I recommend creating a new python environment to avoid dependency issues. With conda, run `conda create --name beat_manipulator`.
@@ -23,11 +23,13 @@ Now, generate the beatmap:
 ```
 your_song.beatmap_generate()
 ```
-Beatmap is generated using madmom library. When you generate it for the first time, it might take up to a minute. However all beatmaps are saved to `beat_manipulator/beatmaps`, so when you load the same file for the second time, it won't need to generate the beatmap.
+Beatmap is generated using madmom library. When you generate it for the first time, it might take up to a minute. However all beatmaps are saved to `beat_manipulator/beatmaps`, so when you load the same file for the second time, it will be instant.
 
 You can access beatmap in `your_song.beatmap` variable. It is a list of values that represent position of each beat in samples.
 
-After generating the beatmap, you can do a bunch of stuff. Song object supports slicing - `your_song[5]` will return audio of the 5th beat (indexing starts from 0, so the first beat is the 0th beat). `your_song[4:8.5]` returns audio starting from 4th beat, ending halfway between 8th and 9th beat. `your_song['your_pattern']` returns a beatswapped audio using the pattern you provided. Patterns are the main feature if this app and you can do a whole bunch of stuff with them. There is a section below that explains how to write those patterns.
+After generating the beatmap, you can do a bunch of stuff. 
+### slicing
+Song object supports slicing - `your_song[5]` will return audio of the 5th beat (indexing starts from 0, so the first beat is the 0th beat). `your_song[4:8.5]` returns audio starting from 4th beat, ending halfway between 8th and 9th beat. `your_song['your_pattern']` returns a beatswapped audio using the pattern you provided. Patterns are the main feature if this app and you can do a whole bunch of stuff with them. There is a section below that explains how to write those patterns.
 
 Another way to beatswap is `your_song.beatswap(pattern = '1, 3, 2, 4', scale = 1, shift = 0, length = None)`. This one doesn't return anything, instead it modifies the song in place.
 
@@ -50,7 +52,7 @@ If you run `your_song.beatmap_save_settings(scale: float, shift: float)`, it wil
 ### writing audio
 To write audio, use `my_song.write(output = '')`. If output is empty string, this will write the song next to your .py file, using the original filename.
 
-### pattern syntax
+# pattern syntax
 The pattern syntax is quite powerful and you can do a whole bunch of stuff with it. Basic syntax is - `1, 3, 2, 4` means every 4 beats, swap 2nd and 3rd beats, but you can do much more, like applying audio effects, shuffling beats, slicing them, mixing two songs, adding samples, sidechain.
 
 You can use spaces freely in patterns for formatting. Most other symbols have some use though. Here is how to write patterns:
