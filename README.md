@@ -1,37 +1,46 @@
-# stunlocked's beat manipulator
+# **stunlocked's beat manipulator**
 Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom).
 ### [Try on Hugging Face](https://huggingface.co/spaces/dpe1/BeatManipulator)
 ### [Try on Google Colab](https://colab.research.google.com/drive/1gEsZCCh2zMKqLmaGH5BPPLrImhEGVhv3?usp=sharing)
 
-## installation
-For most people I recommend using Hugging Face or Google Colab. However if you want to run it locally and have access to more advanced features, here is how to do that.
+# Installation
+For most people I recommend using Hugging Face or Google Colab. However if you run it locally, you will have access to more advanced features that I haven't added to Hugging Face yet, like using samples, mixing multiple songs, presets.
 
-#### conda 3.8, 3.9:
+First I recommend creating a new environment to avoid dependency issues. With conda, you can do that by running `conda create --name beat_manipulator`.
+
+Then run those commands depending on what python you have:
+
+### conda 3.8, 3.9:
 ```
 conda install pip cython mido numpy scipy pysoundfile librosa ffmpeg-python pytest pyaudio pyfftw
+
 pip install madmom pedalboard
 ```
-#### conda 3.10
+### conda 3.10
 ```
 conda install pip cython mido numpy scipy pysoundfile librosa ffmpeg-python pytest pyaudio pyfftw
+
 pip install pedalboard
+
+pip install git+https://github.com/CPJKU/madmom
 ```
-and then install madmom from source as described on their github - [madmom](https://github.com/CPJKU/madmom). You will only have two pip packages - madmom and pedalboard. 
-#### pip 3.8, 3.9
+### pip 3.8, 3.9
 ```
 pip install numpy cython soundfile ffmpeg-python pedalboard librosa
+
 pip install madmom
 ```
-#### pip 3.10
+### pip 3.10
 ```
 pip install numpy cython soundfile ffmpeg-python pedalboard librosa
-```
-and then install madmom from source as described on their github - [madmom](https://github.com/CPJKU/madmom). You will only have two pip packages - madmom and pedalboard. 
 
-#### downloading beat manipualator
+pip install git+https://github.com/CPJKU/madmom
+```
+
+---
 After installing all necessary libraries, to download beat manipulator, download and extract this repo using green "Code" button > Download ZIP, or run `git clone https://github.com/stunlocked1/beat_manipulator`. You can now open examples.py, jupiter.ipynb, or app.py for gradio interface.
 
-## usage
+# Usage
 First, import beat_manipulator and load a song
 ```
 import beat_manipulator as bm
@@ -109,7 +118,15 @@ By default that argument points to `BM_EFFECTS` dictionary.
 #### math
 mathematical expressions with `+`, `-`, `*`, `/`, and `**` are supported. For example, if you write `1/3` anywhere in the pattern, to slice beats or as effect value, it will be replaced by 0.3333...
 #### using samples
-To use samples, provide them in `samples` argument to `your_song.beatswap(..., samples: dict)`. The dictionary should look like this: `{'sample name' : 'path to your sample or numpy array of your sample or bm.song object', 'sample2 name' : 'path or audio 2', ...}`. It supports both loading audio files from a path, and directly loading arrays.
+To use samples, provide them in `samples` argument to `your_song.beatswap(..., samples: dict)`. The dictionary should look like this: 
+```
+{
+  'sample name' : 'path to your sample or numpy array of your sample or bm.song object', 
+  'sample name 2' : 'path or audio 2', 
+  ...
+}
+````
+It supports both loading audio files from a path, and directly loading arrays.
 
 Then in pattern, you can use quotes (`'`, `"`, or `` ` ``) to access samples. For example: `1; "sample_name"` will put that sample on top of 1st beat. Samples are treated just like beats, you can apply effects to them, use any joining operators.
 
