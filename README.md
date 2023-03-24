@@ -182,7 +182,7 @@ bm.image(song = 'path or numpy array', max_size = 4096, scale=1, shift=0, output
 ```
 creates an image and writes it in one line, returns path to exported image.
 ```
-beat_manipulator.osu.generate(song='path or numpy array', difficulties = [0.2, 0.1, 0.05, 0.025, 0.01, 0.0075, 0.005, 0.0025, 0.0001])
+bm.osu.generate(song='path or numpy array', difficulties = [0.2, 0.1, 0.05, 0.025, 0.01, 0.0075, 0.005, 0.0025, 0.0001])
 ```
 generates an osu beatmap (uses madmom beat processor and peak detection). Writes an .osz file that you can install by opening it with osu! and returns path to it.
 ## presets
