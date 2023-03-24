@@ -5,11 +5,31 @@ Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom).
 
 ## installation
 For most people I recommend using Hugging Face or Google Colab. However if you want to run it locally and have access to more advanced features, here is how to do that.
-1. Use python 3.8 - 3.10 (I use 3.9)
-2. I recommend creating a new python environment to avoid dependency issues. With conda, run `conda create --name beat_manipulator`.
-3. If you are using conda, run `conda install pip cython mido numpy scipy pysoundfile librosa ffmpeg-python pytest pyaudio pyfftw`. Then, if you have python 3.8 and 3.9 run `pip install madmom pedalboard`. If you have 3.10 run `pip install pedalboard`, and then install madmom from source as described on their github - [madmom](https://github.com/CPJKU/madmom). You will only have two pip packages - madmom and pedalboard. 
-4. If you are using pip, run `pip install numpy cython soundfile ffmpeg-python pedalboard librosa`, and then `pip install madmom`.
-5. After installing all necessary libraries, to download beat manipulator, download and extract this repo using green "Code" button > Download ZIP, or run `git clone https://github.com/stunlocked1/beat_manipulator`. You can now open examples.py, jupiter.ipynb, or app.py for gradio interface.
+
+#### conda 3.8, 3.9:
+```
+conda install pip cython mido numpy scipy pysoundfile librosa ffmpeg-python pytest pyaudio pyfftw
+pip install madmom pedalboard
+```
+#### conda 3.10
+```
+conda install pip cython mido numpy scipy pysoundfile librosa ffmpeg-python pytest pyaudio pyfftw
+pip install pedalboard
+```
+and then install madmom from source as described on their github - [madmom](https://github.com/CPJKU/madmom). You will only have two pip packages - madmom and pedalboard. 
+#### pip 3.8, 3.9
+```
+pip install numpy cython soundfile ffmpeg-python pedalboard librosa
+pip install madmom
+```
+#### pip 3.10
+```
+pip install numpy cython soundfile ffmpeg-python pedalboard librosa
+```
+and then install madmom from source as described on their github - [madmom](https://github.com/CPJKU/madmom). You will only have two pip packages - madmom and pedalboard. 
+
+#### downloading beat manipualator
+After installing all necessary libraries, to download beat manipulator, download and extract this repo using green "Code" button > Download ZIP, or run `git clone https://github.com/stunlocked1/beat_manipulator`. You can now open examples.py, jupiter.ipynb, or app.py for gradio interface.
 
 ## usage
 First, import beat_manipulator and load a song
