@@ -184,7 +184,7 @@ creates an image and writes it in one line, returns path to exported image.
 ```
 beat_manipulator.osu.generate(song='path or numpy array', difficulties = [0.2, 0.1, 0.05, 0.025, 0.01, 0.0075, 0.005, 0.0025, 0.0001])
 ```
-generates an osu beatmap (uses madmom beat processor and peak detection)
+generates an osu beatmap (uses madmom beat processor and peak detection). Writes an .osz file that you can install by opening it with osu! and returns path to it.
 ## presets
 there are some patterns in `beat_manipulator/presets.yaml` file. Those are supposed to be used on normalized beat maps, where kick + snare is two beats, so make sure to adjust beatmaps using `scale` and `shift`.
 To use one of the presets from that file, write: 
