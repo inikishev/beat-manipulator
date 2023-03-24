@@ -38,13 +38,13 @@ Another way to beatswap is `your_song.beatswap(pattern = '1, 3, 2, 4', scale = 1
 
 `scale = 2`, on the other hand, will merge every two beat positions in the beatmap. Useful, for example, when beat map detection puts sees BPM as two times faster than it actually is, and puts beats in between every actual beat.
 
-To scale the beatmap, you can use `your_song.beatmap_scale(0.5)`, or specify scale directly in `your_song.beatswap(...)`
+To scale the beatmap, you can use `your_song.beatmap_scale(0.5)`, or specify scale directly in `your_song.beatswap(..., scale = float)`
 
 ### shift
-Shifts the beatmap, in beats. For example, if you want to remove 4th beat every four beats, you can do it by writing '1, 2, 3, 4!'. 
+Shifts the beatmap, in beats. For example, if you want to remove 4th beat every four beats, you can do it by writing `1, 2, 3, 4!`. 
 However sometimes it doesn't properly detect which beat is first, and for example remove 2nd beat every 4 beats instead. In that case, if you want 4th beat, use `shift = 2`. Also sometimes beats are detected right in between actual beats, so shift = 0.5 or -0.5 will fix it.
 
-To shift the beatmap, you can use `your_song.beatmap_shift(0.5)`, or specify shift directly in `your_song.beatswap(...)`
+To shift the beatmap, you can use `your_song.beatmap_shift(0.5)`, or specify shift directly in `your_song.beatswap(..., shift = float)`
 
 ### saving scale and shift
 If you run `your_song.beatmap_save_settings(scale: float, shift: float)`, it will save a file in `beat_manipulator/beatmaps` with your scale and shift. That way, next time you load that song, it will automatically apply those scale and shift values.
@@ -60,7 +60,7 @@ You can use spaces freely in patterns for formatting. Most other symbols have so
 - `1` meas the first beat. You can also slice beats:
 - `1>0.5` means first half of first beat
 - `1<0.5 means second half of first beat
-- `0:0.5` - range of beats, this also means first half of first beat, but with this you can do complex stuff like `1.25:1.5`. However this one is a bit more confusing because indexing starts from 0, so 1:2 is second beat, not first. Keep that in mind.
+- `0:0.5` - range of beats, this also means first half of first beat, but with this you can do complex stuff like `1.25:1.5`. However this one is a bit more confusing because indexing starts from 0, so 1:2 is second beat, not first.
 - Also sometimes it is more convenient to use smaller `scale`, like 0.5 or 0.25, instead of slicing beats.
 #### basic patterns
 - `1, 3, 2, 4` means 3rd and 2nds beats will be swapped every 4 beats. Happens every 4 beats because 4 is the biggest number in the pattern.
@@ -74,9 +74,6 @@ You can use spaces freely in patterns for formatting. Most other symbols have so
   - `;` puts the beat on top of previous beat. Normalizes the volume to avoid clipping. If previous beat is shorter, your beat will be shortened to match it.
   - `^` multiplies previous beat by your beat. This can be used for fake sidechain.
   - `$` adds the beat on top of previous beat + sidechains previous beat by your beat.
- - `1>0.5` means you take first half of the first beat.
- - `1<0.5` - second half of first beat.
- - `1.25:1.75`
 #### effects
 beats can be followed by effects. For example `1s0.75` means take first beat and play it at 0.75x speed. Here are all available effects:
   - `s` - speed. `1s2` means first beat will be played at 2x speed.
@@ -86,12 +83,13 @@ beats can be followed by effects. For example `1s0.75` means take first beat and
   - `b` - bitcrush. `1b4` will bitcrush it.
   - `g` - gradient, sounds like highpass. `1g1` is the recommended value
   - `c` - channel. If not followed by number, swaps channels. If followed by 0, plays only left channel. If 1, only right channel
+  - mixing effects - `1s2rd8` - take first beat, play at 2x speed, reversed, and downsampled.
 You can also define your own effects. Check `BM_EFFECTS` dictionary from `beat_manipulator/effects.py`, this is where it reads effects from. You can add new stuff to that dictionary and use your own effects this way, or specify your own dictionary when using `your_song.beatswap(..., effects: dict)` with your `effects` argument. 
 By default that argument points to `BM_EFFECTS` dictionary.
 #### math
 mathematical expressions with `+`, `-`, `*`, `/`, and `**` are supported. For example, if you write `1/3` anywhere in the pattern, to slice beats or as effect value, it will be replaced by 0.3333...
 #### using samples
-To use samples, provide them in `samples` argument to your_song.beatswap(..., samples: dict). The dictionary should look like this: `{'sample name' : 'path to your sample or numpy array of your sample or bm.song object`, 'sample2 name' : 'path or audio 2, ...}. It supports both loading audio files from a path, and directly loading arrays.
+To use samples, provide them in `samples` argument to `your_song.beatswap(..., samples: dict)`. The dictionary should look like this: `{'sample name' : 'path to your sample or numpy array of your sample or bm.song object', 'sample2 name' : 'path or audio 2', ...}`. It supports both loading audio files from a path, and directly loading arrays.
 
 Then in pattern, you can use quotes (`'`, `"`, or `` ` ``) to access samples. For example: `1; "sample_name"` will put that sample on top of 1st beat. Samples are treated just like beats, you can apply effects to them, use any joining operators.
 
@@ -112,10 +110,12 @@ The difference is, instead of using quotes, for songs you use square brackets: `
 - `@` allows you to take a random beat with the following syntax: @start_stop_step. For example, `@1_4_0.5` means it will take a random beat out of 1st, 1.5, 2nd, 2.5, 3rd, 3.5, and 4th. It will take whole beat, so you can also add `>0.5` to take only first half.
 - `%` - for very advanced patterns you can create variables from various metrics. For example, `%v` will create a variable with average volume of that beat, and all following `%` will be replaced by that variable until you create a new one. Useful for applying different effects based on different song metrics. All metrics are in `beat_manipulator/metrics.py`.
 #### special patterns
-You can write special commands into the `pattern` argument instead of actual patterns:
+You can write special commands into the `pattern` argument instead of actual patterns.
 - `reverse` - plays all beats in reverse chronological order
 - `shuffle` - shuffles all beats
 - `test` - puts different pitched cowbells on each beat, useful for testing beat detection and adjusting it using scale and shift. Each cowbell is 1 beat, highest pitched cowbell is the 1st beat, lowest pitched - 4th.
+#### complex patterns
+You should be able to use all of the above operators in any combination, as complex as you want. Very low scales should also be fine, up to 0.001.
 
 ### creating images
 You can create cool images based on beat positions. Each song produces its own unique image. Write:
@@ -129,9 +129,19 @@ your_song.image_write()
 The image will by default be resized to 4096x4096. It is also possible to export original image, which usually is too big for most image viewers to handle it. However the cool thing is that you can apply image effects to it, and then turn it back into audio. I will soon add info on how to do that.
 
 ### quick functions
-- `bm.beatswap(song = 'path or numpy array', pattern = '1,3,2,4', scale=1, shift=0, output='')` - allows you to beatswap and write a song loaded from path or numpy array in one line. Returns path to the exported beatswapped song file.
-- `bm.image(song = 'path or numpy array', max_size = 4096, scale=1, shift=0, output='')` - creates an image and writes it in one line, returns path to exported image.
+```
+bm.beatswap(song = 'path or numpy array', pattern = '1,3,2,4', scale=1, shift=0, output='')
+```
+allows you to beatswap and write a song loaded from path or numpy array in one line. Returns path to the exported beatswapped song file.
+
+```
+bm.image(song = 'path or numpy array', max_size = 4096, scale=1, shift=0, output='')
+```
+creates an image and writes it in one line, returns path to exported image.
 
 ### patterns
 some cool patterns are in `beat_manipulator/presets.yaml` file. Those are supposed to be used on normalized beat maps, where kick + snare is two beats, so make sure to adjust beatmaps using `scale` and `shift`.
-To use one of the presets from that file, write `bm.presets.use(song = song, preset = 'preset name', scale = 1, shift = 0)`
+To use one of the presets from that file, write: 
+```
+bm.presets.use(song = song, preset = 'preset name', scale = 1, shift = 0)
+```
