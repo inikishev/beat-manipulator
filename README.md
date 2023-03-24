@@ -2,7 +2,6 @@
 Advanced beat swapping powered by [madmom](https://github.com/CPJKU/madmom).
 ### [Try on Hugging Face](https://huggingface.co/spaces/dpe1/BeatManipulator)
 ### [Try on Google Colab](https://colab.research.google.com/drive/1gEsZCCh2zMKqLmaGH5BPPLrImhEGVhv3?usp=sharing)
-
 # Installation
 For most people I recommend using Hugging Face or Google Colab. However if you run it locally, you will have access to more advanced features that I haven't added to Hugging Face yet, like using samples, mixing multiple songs, presets.
 
@@ -39,7 +38,6 @@ pip install git+https://github.com/CPJKU/madmom
 
 ---
 After installing all necessary libraries, to download beat manipulator, download and extract this repo using green "Code" button > Download ZIP, or run `git clone https://github.com/stunlocked1/beat_manipulator`. You can now open examples.py, jupiter.ipynb, or app.py for gradio interface.
-
 # Usage
 First, import beat_manipulator and load a song
 ```
@@ -58,29 +56,39 @@ You can access beatmap in `your_song.beatmap` variable. It is a list of values t
 
 After generating the beatmap, you can do a bunch of stuff. 
 ### slicing
-Song object supports slicing - `your_song[5]` will return audio of the 5th beat (indexing starts from 0, so the first beat is the 0th beat). `your_song[4:8.5]` returns audio starting from 4th beat, ending halfway between 8th and 9th beat. `your_song['your_pattern']` returns a beatswapped audio using the pattern you provided. Patterns are the main feature if this app and you can do a whole bunch of stuff with them. There is a section below that explains how to write those patterns.
+Song object supports slicing.
 
-Another way to beatswap is `your_song.beatswap(pattern = '1, 3, 2, 4', scale = 1, shift = 0, length = None)`. This one doesn't return anything, instead it modifies the song in place.
+- `your_song[5]` will return audio of the 5th beat, indexing starts from 1. 
+- `your_song[4:8.5]` returns audio starting from 4th beat, ending halfway between 8th and 9th beat. `your_song[0:1]` is equivalent to `your_song[1]`
+- `your_song['your_pattern']` returns a beatswapped audio using the pattern you provided. Beatswapping with patterns is the main feature if this app and you can do a whole bunch of stuff with them. There is a section below that explains how to write those patterns.
+### beatswapping
+Another way to beatswap is: 
+```
+your_song.beatswap(pattern = '1, 3, 2, 4', scale = 1, shift = 0, length = None)
+```
+This one doesn't return anything, instead it modifies the song in place.
 
+You can also beatwap and write audio in one line:
+```
+bm.beatswap(song = 'path or numpy array', pattern = '1, 3, 2, 4', scale = 1, shift = 0, output = '')
+```
 ### scale
 `scale = 0.5` will insert a new beat position between every existing beat position in the beatmap. That allows you to make patterns on smaller intervals.
 
 `scale = 2`, on the other hand, will merge every two beat positions in the beatmap. Useful, for example, when beat map detection puts sees BPM as two times faster than it actually is, and puts beats in between every actual beat.
 
 To scale the beatmap, you can use `your_song.beatmap_scale(0.5)`, or specify scale directly in `your_song.beatswap(..., scale = float)`
-
 ### shift
 Shifts the beatmap, in beats. For example, if you want to remove 4th beat every four beats, you can do it by writing `1, 2, 3, 4!`. 
 However sometimes it doesn't properly detect which beat is first, and for example remove 2nd beat every 4 beats instead. In that case, if you want 4th beat, use `shift = 2`. Also sometimes beats are detected right in between actual beats, so shift = 0.5 or -0.5 will fix it.
 
 To shift the beatmap, you can use `your_song.beatmap_shift(0.5)`, or specify shift directly in `your_song.beatswap(..., shift = float)`
 
+When you specify shift in a beatswap function, it applies before scale for consistency.
 ### saving scale and shift
 If you run `your_song.beatmap_save_settings(scale: float, shift: float)`, it will save a file in `beat_manipulator/beatmaps` with your scale and shift. That way, next time you load that song, it will automatically apply those scale and shift values.
-
 ### writing audio
 To write audio, use `my_song.write(output = '')`. If output is empty string, this will write the song next to your .py file, using the original filename.
-
 # pattern syntax
 The pattern syntax is quite powerful and you can do a whole bunch of stuff with it. Basic syntax is - `1, 3, 2, 4` means every 4 beats, swap 2nd and 3rd beats, but you can do much more, like applying audio effects, shuffling beats, slicing them, mixing two songs, adding samples, sidechain.
 
@@ -153,8 +161,7 @@ You can write special commands into the `pattern` argument instead of actual pat
 - `test` - puts different pitched cowbells on each beat, useful for testing beat detection and adjusting it using scale and shift. Each cowbell is 1 beat, highest pitched cowbell is the 1st beat, lowest pitched - 4th.
 #### complex patterns
 You should be able to use all of the above operators in any combination, as complex as you want. Very low scales should also be fine, up to 0.001.
-
-### creating images
+## creating images
 You can create cool images based on beat positions. Each song produces its own unique image. Write:
 ```
 your_song.image_generate()
@@ -164,8 +171,7 @@ image will be saved as a numpy array to your_song.image variable. To export it t
 your_song.image_write()
 ```
 The image will by default be resized to 4096x4096. It is also possible to export original image, which usually is too big for most image viewers to handle it. However the cool thing is that you can apply image effects to it, and then turn it back into audio. I will soon add info on how to do that.
-
-### quick functions
+## quick functions
 ```
 bm.beatswap(song = 'path or numpy array', pattern = '1,3,2,4', scale=1, shift=0, output='')
 ```
@@ -175,9 +181,12 @@ allows you to beatswap and write a song loaded from path or numpy array in one l
 bm.image(song = 'path or numpy array', max_size = 4096, scale=1, shift=0, output='')
 ```
 creates an image and writes it in one line, returns path to exported image.
-
-### patterns
-some cool patterns are in `beat_manipulator/presets.yaml` file. Those are supposed to be used on normalized beat maps, where kick + snare is two beats, so make sure to adjust beatmaps using `scale` and `shift`.
+```
+beat_manipulator.osu.generate(song='path or numpy array', difficulties = [0.2, 0.1, 0.05, 0.025, 0.01, 0.0075, 0.005, 0.0025, 0.0001])
+```
+generates an osu beatmap (uses madmom beat processor and peak detection)
+## presets
+there are some patterns in `beat_manipulator/presets.yaml` file. Those are supposed to be used on normalized beat maps, where kick + snare is two beats, so make sure to adjust beatmaps using `scale` and `shift`.
 To use one of the presets from that file, write: 
 ```
 bm.presets.use(song = song, preset = 'preset name', scale = 1, shift = 0)
