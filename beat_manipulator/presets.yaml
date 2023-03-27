@@ -1,4 +1,4 @@
-# 32, 16, 8, 6, 4, 3, 2, 4/3, 1.5, 1+1/3, 1, 0.75, 2/3, 0.5, 1/3, 0.25, 0.2, 1/7, 0.125
+# Presets. `Scales` can be a list of all scales that the pattern works with.
 # ________________ BASIC ________________
 2x speed:
   pattern: 1>0.5
@@ -300,3 +300,6 @@ Rhythm Era:
 # ________________ OTHER ________________
 test:
   pattern: test
+  
+  
+ # possible scales: 32, 16, 8, 6, 4, 3, 2, 4/3, 1.5, 1+1/3, 1, 0.75, 2/3, 0.5, 1/3, 0.25, 0.2, 1/7, 0.125
