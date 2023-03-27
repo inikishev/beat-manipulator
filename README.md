@@ -94,9 +94,9 @@ The pattern syntax is quite powerful and you can do a whole bunch of stuff with 
 
 You can use spaces freely in patterns for formatting. Most other symbols have some use though. Here is how to write patterns:
 #### beats
-- `1` meas the first beat. You can also slice beats:
-- `1>0.5` means first half of first beat
-- `1<0.5 means second half of first beat
+- `1` - 1st beat;
+- `1>0.5` - first half of first beat
+- `1<0.5 - second half of first beat
 - `0:0.5` - range of beats, this also means first half of first beat, but with this you can do complex stuff like `1.25:1.5`. However this one is a bit more confusing because indexing starts from 0, so 1:2 is second beat, not first.
 - Also sometimes it is more convenient to use smaller `scale`, like 0.5 or 0.25, instead of slicing beats.
 #### basic patterns
