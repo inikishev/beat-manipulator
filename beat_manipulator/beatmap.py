@@ -163,7 +163,7 @@ def generate(audio: np.ndarray, sr: int, lib='madmom.BeatDetectionProcessor', ca
 
 
 
-def save_settings(audio: np.ndarray, filename: str = None, lib: str = 'madmom.BeatDetectionProcessor', scale: float = None, shift: float = None, adjust: int = None, log = True, overwrite = 'ask'):
+def save_settings(audio: np.ndarray, filename: str = None, lib: str = 'madmom.BeatDetectionProcessor', scale: float = None, shift: float = None, adjust: int = None, normalized: str = None, log = True, overwrite = 'ask'):
     if isinstance(overwrite, str): overwrite = overwrite.lower()
     audio_id=hex(len(audio[0]))
     cacheDir="beat_manipulator/beatmaps/" + ''.join(filename.split('/')[-1]) + "_"+lib+"_"+audio_id+'.txt'
@@ -190,6 +190,6 @@ def save_settings(audio: np.ndarray, filename: str = None, lib: str = 'madmom.Be
         elif not (overwrite == 'true' or overwrite =='y' or overwrite =='yes' or overwrite is True): return
     
     with open(settingsDir, 'w') as f:
-        f.write(f'{scale},{shift},{adjust}')
+        f.write(f'{scale},{shift},{adjust},{normalized}')
     if log is True: print(f"Saved scale = `{scale}`, shift = `{shift}`, adjust = `{adjust}` to `{settingsDir}`")
 

@@ -29,8 +29,14 @@ def _beatswap(song, pattern, pattern_name, scale = 1, shift = 0, output = '', mo
         song.beatswap(pattern, scale = scale[0], shift = shift)
         return song
 
+def get(preset):
+    """returns (pattern, scale, shift)"""
+    global presets
+    assert preset in presets, f"{preset} not found in presets."
+    preset = presets[preset]
+    return preset['pattern'], preset['scale'] if 'scale' in preset else 1, preset['shift'] if 'shift' in preset else 0
 
-def use(song, preset, output = ''):
+def use(song, preset, output = '', scale = 1, shift = 0):
     global presets
     assert preset in presets, f"{preset} not found in presets."
     preset_name = preset
@@ -43,7 +49,7 @@ def use(song, preset, output = ''):
             elif 'sidechain' in i:
                 pass
             else:
-                song = _beatswap(song, pattern = i['pattern'], scale = i['scale'] if 'scale' in i else 1, shift = i['shift'] if 'shift' in i else 0, output = output, modify = True, pattern_name = preset_name)
+                song = _beatswap(song, pattern = i['pattern'], scale = scale*(i['scale'] if 'scale' in i else 1), shift = shift*(i['shift'] if 'shift' in i else 0), output = output, modify = True, pattern_name = preset_name)
         song.write(output, suffix = f' ({preset})')
     else:
         if 'sample' in preset:
@@ -51,7 +57,7 @@ def use(song, preset, output = ''):
         elif 'sidechain' in preset:
             pass
         else:
-            _beatswap(song, pattern = preset['pattern'], scale = preset['scale'] if 'scale' in preset else 1, shift = preset['shift'] if 'shift' in preset else 0, output = output, modify = False, pattern_name = preset_name)
+            _beatswap(song, pattern = preset['pattern'], scale = scale*(preset['scale'] if 'scale' in preset else 1), shift = shift*(preset['shift'] if 'shift' in preset else 0), output = output, modify = False, pattern_name = preset_name)
 
 def use_all(song, output = ''):
     if not isinstance(song, main.song): song = main.song(song)

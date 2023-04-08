@@ -22,6 +22,7 @@ class song:
 
         self.log = log
         self.beatmap = None
+        self.normalized = None
 
     def _slice(self, a):
         if a is None: return None
@@ -126,7 +127,14 @@ class song:
         """Find beat positions"""
         from . import beatmap
         self.beatmap = beatmap.generate(audio = self.audio, sr = self.sr, lib=lib, caching=caching, filename = self.path, log = self.log, load_settings = load_settings)
-        
+        if load_settings is True:
+            audio_id=hex(len(self.audio[0]))
+            settingsDir="beat_manipulator/beatmaps/" + ''.join(self.path.split('/')[-1]) + "_"+lib+"_"+audio_id+'_settings.txt'
+            import os
+            if os.path.exists(settingsDir):
+                with open(settingsDir, 'r') as f:
+                    settings = f.read().split(',')
+                if settings[3] != None: self.normalized = settings[3]
         self.beatmap_default = self.beatmap.copy()
         self.lib = lib
 
@@ -144,36 +152,25 @@ class song:
     def beatmap_adjust(self, adjust = 500):
         self.beatmap = np.append(np.sort(np.absolute(self.beatmap - adjust)), len(self.audio[0]))
 
-    def beatmap_save_settings(self, scale: float = None, shift: float = None, adjust: int = None, overwrite = 'ask'):
+    def beatmap_save_settings(self, scale: float = None, shift: float = None, adjust: int = None, normalized = None, overwrite = 'ask'):
         from . import beatmap
         if self.beatmap is None: self.beatmap_generate()
-        beatmap.save_settings(audio = self.audio, filename = self.path, scale = scale, shift = shift,adjust = adjust, log=self.log, overwrite=overwrite, lib = self.lib)
+        beatmap.save_settings(audio = self.audio, filename = self.path, scale = scale, shift = shift,adjust = adjust, normalized = normalized, log=self.log, overwrite=overwrite, lib = self.lib)
 
     def beatswap(self, pattern = '1;"cowbell"s3v2, 2;"cowbell"s2, 3;"cowbell", 4;"cowbell"s0.5, 5;"cowbell"s0.25, 6;"cowbell"s0.4, 7;"cowbell"s0.8, 8;"cowbell"s1.6', 
-        scale:float = 1, shift:float = 0, length = None, samples:dict = BM_SAMPLES, effects:dict = BM_EFFECTS, metrics:dict = BM_METRICS, smoothing: int = 100, adjust=500, return_audio = False):
+        scale:float = 1, shift:float = 0, length = None, samples:dict = BM_SAMPLES, effects:dict = BM_EFFECTS, metrics:dict = BM_METRICS, smoothing: int = 100, adjust=500, return_audio = False, normalize = False):
         
-        pattern_text = pattern
+        if normalize is True:
+            self.normalize_beats()
         if self.beatmap is None: self.beatmap_generate()
         beatmap_default = self.beatmap.copy()
         self.beatmap = np.append(np.sort(np.absolute(self.beatmap - adjust)), len(self.audio[0]))
         self.beatmap_shift(shift)
         self.beatmap_scale(scale)
-        
-        from . import parse
-        pattern, operators, pattern_length, shuffle_groups, shuffle_beats, c_slice, c_misc, c_join = parse.parse(pattern = pattern, samples = samples, pattern_length = length, log = self.log)
-        
-        #print(f'pattern length = {pattern_length}')
-
-        # beatswap
-        n=-1
-        tries = 0
-        metric = None
-        result=[self.audio[:,:self.beatmap[0]]]
-        #for i in pattern: print(i)
 
         # baked in presets
         #reverse
-        if pattern_text.lower() == 'reverse':
+        if pattern.lower() == 'reverse':
             if return_audio is False:
                 self.audio = self[::-1]
                 self.beatmap = beatmap_default.copy()
@@ -183,7 +180,7 @@ class song:
                 self.beatmap = beatmap_default.copy()
                 return result
         # shuffle
-        elif pattern_text.lower() == 'shuffle':
+        elif pattern.lower() == 'shuffle':
             import random
             beats = list(range(len(self.beatmap)))
             random.shuffle(beats)
@@ -197,7 +194,7 @@ class song:
                 self.beatmap = beatmap_default.copy()
                 return result
         # test
-        elif pattern_text.lower() == 'test':
+        elif pattern.lower() == 'test':
             if return_audio is False:
                 self.beatswap('1;"cowbell"s3v2, 2;"cowbell"s2, 3;"cowbell", 4;"cowbell"s0.5, 5;"cowbell"s0.25, 6;"cowbell"s0.4, 7;"cowbell"s0.8, 8;"cowbell"s1.6')
                 self.beatmap = beatmap_default.copy()
@@ -206,6 +203,48 @@ class song:
                 result = self.beatswap('1;"cowbell"s3v2, 2;"cowbell"s2, 3;"cowbell", 4;"cowbell"s0.5, 5;"cowbell"s0.25, 6;"cowbell"s0.4, 7;"cowbell"s0.8, 8;"cowbell"s1.6', return_audio = True)
                 self.beatmap = beatmap_default.copy()
                 return result
+        # random
+        elif pattern.lower() == 'random':
+            import random,math
+            pattern = ''
+            rand_length=0
+            while True:
+                rand_num = int(math.floor(random.triangular(1, 16, rand_length-1)))
+                if random.uniform(0, rand_num)>rand_length: rand_num = rand_length+1
+                rand_slice = random.choices(['','>0.5','>0.25', '<0.5', '<0.25', '<1/3', '<2/3', '>1/3', '>2/3', '<0.75', '>0.75', 
+                                             f'>{random.uniform(0.01,2)}', f'<{random.uniform(0.01,2)}'], weights = [13,1,1,1,1,1,1,1,1,1,1,1,1], k=1)[0]
+                
+                rand_effect = random.choices(['', 's0.5', 's2', f's{random.triangular(0.1,1,4)}', 'r','v0.5', 'v2', 'v0', 
+                                              f'd{int(random.triangular(1,8,16))}', 'g', 'c', 'c0', 'c1', f'b{int(random.triangular(1,8,4))}'], 
+                                              weights=[30, 2, 2, 2, 2, 1, 1, 2, 2, 1, 2, 2, 2, 1], k=1)[0]
+                
+                rand_join = random.choices([', ', ';'], weights = [5, 1], k=1)[0]
+                pattern += f'{rand_num}{rand_slice}{rand_effect}{rand_join}'
+                if rand_join == ',': rand_length+=1
+                if rand_length in [4, 8, 16]: 
+                    if random.uniform(rand_num,16)>14: break
+                else: 
+                    if random.uniform(rand_num,16)>15.5: break
+            pattern_length = 4
+            if rand_length > 6: pattern_length = 8
+            if rand_length > 12: pattern_length = 16
+            if rand_length > 24: pattern_length = 32
+
+
+        
+        from . import parse
+        pattern, operators, pattern_length, shuffle_groups, shuffle_beats, c_slice, c_misc, c_join = parse.parse(pattern = pattern, samples = samples, pattern_length = length, log = self.log)
+        
+        #print(f'pattern length = {pattern_length}')
+
+        # beatswap
+        n=-1
+        tries = 0
+        metric = None
+        result=[self.audio[:,:self.beatmap[0]]]
+        #for i in pattern: print(i)
+
+
             
         
         # loop over pattern until it reaches the last beat
@@ -431,6 +470,13 @@ class song:
         if return_audio is False: self.audio = np.array([functools.reduce(operator.iconcat, result[::2], []), functools.reduce(operator.iconcat, result[1:][::2], [])])
         else: return np.array([functools.reduce(operator.iconcat, result[::2], []), functools.reduce(operator.iconcat, result[1:][::2], [])])
 
+    def normalize_beats(self):
+        if self.normalized is not None: 
+            if ',' in self.normalized: 
+                self.beatswap(pattern = self.normalized)
+            else:
+                from . import presets
+                self.beatswap(*presets.get(self.normalized))
 
     def image_generate(self, scale=1, shift=0, mode = 'median'):
         if self.beatmap is None: self.beatmap_generate()

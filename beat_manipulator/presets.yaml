@@ -107,59 +107,102 @@ reverse mix:
   pattern: 1;1r
   scale: 4, 1, 0.75, 0.5
 
+random:
+  pattern: random
+  scale: 2, 1, 0.5, 0.25, 0.125
+  description: generates a new random pattern each time
+
+kicks only:
+  pattern: 1>0.5
+  scale: 2
+  description: plays only kicks
+
+kicks only double-time:
+  pattern: 1>0.25
+  scale: 2
+  description: plays only kicks
+
+snares only:
+  pattern: 1<0.5
+  scale: 2
+  description: plays only snares
+
+no main drums:
+  pattern: 1<0.5
+  scale: 1, 0.5, 0.25, 0.125
+  description: skips kicks and snares
+
 # ________________ STRUCTURES ________________
 half-time:
   pattern: 1,2,4,5, | 3,6,8,7, | 9,11,12,13, | 15,13,14,16
   scale: 1, 0.5 #0.25
+  description: halves the BPM
 
 quarter-time 1:
   pattern: 1,2,4,5,|6,8,9,10,|11,12,13,14,|16,14,15,16
   scale: 0.5
+  description: 4 times lower BPM
 
 quarter-time 2:
   pattern: 1,2,4,5, | 6,8,10,12, | 11,10,12,13, | 9,13,14,16
   scale: 0.5 #0.25
+  description: 4 times lower BPM, with a syncopated structure
 
 dotted snares 1:
   pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
   scale: 2, 1
+  description: Plays 5 snares in a 4/3 syncopation, a rhythm commonly used in drum&bass
 
 dotted snares 2:
   pattern: 1, 2, 3 , 4, | 5, 7 , 6, 8, | 11 , 10, 9, 11 , | 13, 14, 15 , 16
   scale: 0.5 #0.25
+  description: Plays 5 snares in a 4/3 syncopation, a rhythm commonly used in drum&bass. This one only swaps snares and preserves the original rhythm better.
 
 dotted snares 2 long:
   pattern: 1, 2, 3 , 4, | 5, 7 , 6, 8, | 11 , 10, 9, 11 , | 13, 14, 15 , 16, | 17, 19 , 18, 20, | 23 , 22, 21, 23 , | 25, 26, 27 , 28, | 29, 31 , 30, 32
   scale: 0.5 #0.25
-
+  description: Plays 10 snares in a long 4/3 syncopation, a rhythm commonly used in drum&bass/darkstep.
+  
 dotted snares 2 longer:
   pattern: 1, 2, 3 , 4, | 5, 7 , 6, 8, | 11 , 10, 9, 11 , | 13, 14, 15 , 16, | 17, 19 , 18, 20, | 23 , 22, 21, 23 , | 25, 26, 27 , 28, | 29, 31 , 30, 32
   scale: 0.5 #0.25
+  description: Plays 20 snares in a very long 4/3 syncopation to create a rolling, jazzy feel.
 
-dotted snares fast:
+dotted snares fast 1:
   pattern: 1, 2, 3, 5>0.5, 7, 5>0.5, 11, 5>0.5, 7, 5>0.5, 11, 9>0.5, 7, 9>0.5, 11, 9>0.5, 7, 9>0.5, 11, 16
   scale: 0.5
+  description: Plays 10 snares in a fast 4/3 syncopation, a rhythm commonly used in drum&bass
+
+dotted snares fast 2:
+  pattern: 1, 2>0.75,   2>0.25, 1.25:1.75;3, 4>0.75, 4>0.75, 4>0.75, 4>0.25, 3.25:3.75;5, 6>0.75, 6>0.75;7, 8>0.75, 6>0.25;8<0.25
+  scale: 1
+  description: Plays 10 snares in a fast 4/3 syncopation, a rhythm commonly used in drum&bass
 
 dotted kicks:
   pattern: 1>0.75, 1>0.25, 2>0.5, 1>0.75, 1>0.75, 4>0.75, 1>0.75, 1>0.5, 6>0.25, 1>0.75, 1>0.75, 1>0.25, 8>0.5, 1>0.5
   scale: 1
+  description: Plays the first beat in a 4/3 syncopation while preserving snare beats.
 
 dotted kicks 2:
-  pattern: 0:0.75, 0.75:1.5v0.6;0:0.75v0.6, 1.5:2.25v0.6;0:0.75v0.6, 2.25:3v0.6;0:0.75v0.6, 3:3.75v0.6;0:0.75v0.6, 3.75:4.5v0.6;0:0.75v0.6, 4.5:5.25v0.6;0:0.75v0.6, 5.25:6v0.6;0:0.75v0.6, 6:6.75v0.6;0:0.75v0.6, 6.75:7.5v0.6;0:0.75v0.6, 7.5:8v0.6;0:0.5v0.6
+  pattern: 0:0.75, 0.75:1.5;0:0.75, 1.5:2.25;0:0.75, 2.25:3;0:0.75, 3:3.75;0:0.75, 3.75:4.5;0:0.75, 4.5:5.25;0:0.75, 5.25:6;0:0.75, 6:6.75;0:0.75, 6.75:7.5;0:0.75, 7.5:8;0:0.5
   scale: 1
+  description: Plays a 4/3 syncopated first beat on top of normal beats.
 
 tripple dotted: #try shifts
   pattern: 1>0.375, 1>0.375, 1>0.25
   scale: 8, 4, 2, 1, 0.5
+  description: Each beat turns into three 4/3 syncopated notes. Can be somewhat similar to footwork.
 
 tripple dotted snares:
   pattern: 1>0.375, 1>0.375, 1>0.25
   scale: 8, 4, 2
   shift: 1
+  description: plays only the snare beats in three 4/3 syncopated notes, a rhythm used in drum&bass/jungle.
 
 dotted structure:
   pattern: 1>0.75, 2>0.75, 4>0.5
   scale: 4, 2, 1 #0.5
+  description: plays the significant drum beats as three 4/3 syncopated notes. Similar to moombahton but without the second kick.
 
 dotted chaos 1:
   pattern: 1>1/3
@@ -169,47 +212,57 @@ dotted chaos 2:
   pattern: 1>1/6
   scale: 0.75
 
+dotted pattern 1:
+  pattern: 1, 2>0.75,   2>0.25, 1.25:1.75;3, 2>0.75, 2>0.75, 2>0.75, 2>0.25, 1.25:1.75;5, 2>0.75, 2>0.75;7, 2>0.75, 2>0.25;8<0.25
+  scale: 0.5
+  description: plays part between first kick and snare in a 4/3 syncopation, with original drums on top.
+
+dotted pattern 2:
+  pattern: 1, 2>0.75,   2>0.25, 1.25:1.75;3, 4>0.75, 4>0.75, 4>0.75, 4>0.25, 3.25:3.75;5, 6>0.75, 6>0.75;7, 8>0.75, 6>0.25;8<0.25
+  scale: 0.5
+  description: plays parts between each kick and snare in a 4/3 syncopation, with original drums on top.
+
 # ________________ TIME SIGNATURES ________________
 4-3:
-  pattern: 0:2/3, 1:5/3, 1:5/3
+  pattern: 1>2/3, 2>2/3, 2>2/3
   scale: 2, 1, 0.5
+  description: 4/3 time signature, preserves length
 
 3-4:
   pattern: 1>0.75
   scale: 8, 4, 3, 2
+  description: plays 3 beats out of each 4, creating 3/4 time signature
 
 4-7 1:
   pattern: 1, 2, 3, 4>0.5
   scale: 2, 1, 0.5, 0.25, 0.125
+  description: cuts 4th beat in half, creating 4/7 time signature
 
 4-7 2:
   pattern: 1, 2, 3, 4>0.25, 3.75:4, 5,6>0.5, 7, 8
   scale: 2, 1, 0.5, 0.25, 0.125
+  description: alternates between cutting 2nd and 4th beats in half, creating a natural 4/7 time signature
 
 4-13:
   pattern: 1, 2, 3, 4>0.25
   scale: 4, 2, 1, 0.5
+  description: abruptly stops on quarter of the 4th beat, creating 4/13 time signature
 
 # ________________ GENRES ________________
 moombahton:
   pattern: 1>0.75, 2>0.25, 1>0.5, 4>0.5
   scale: 3, 2, 1
+  description: a distinct popular moombathon/dutch house rhythm.
 
 four-on-the-floor 1:
   pattern: 1, 2, 1, 4, 1, 6, 1, 8, 1, 10, 1, 12, 1, 14, 1, 16
   scale: 0.5
+  description: replaces snares with kicks
 
 four-on-the-floor 1 double-time:
   pattern: 1, 2, 1, 4, 1, 6, 1, 8, 1, 10, 1, 12, 1, 14, 1, 16, 1, 18, 1, 20, 1, 22, 1, 24, 1, 26, 1, 28, 1, 30, 1, 32
   scale: 0.25
-
-four-on-the-floor 2:
-  pattern: 1>0.5
-  scale: 2
-
-four-on-the-floor 2 double-time:
-  pattern: 1>0.25
-  scale: 2
+  description: replaces snares with kicks
 
 house 1:
   pattern: 1, 2, 3, 4, 1, 6, 7, 8, 1, 10, 11, 12, 1, 14, 15, 16
@@ -230,22 +283,27 @@ house 2 double-time:
 drill:
   pattern: 1>0.75, 2>0.75, 2>0.5,  3>0.75, 4>0.75, 4>0.5,  5>0.75, 6>0.75, 6>0.5,  6, 7>0.75, 8<0.25
   scale: 1, 0.5, 0.25 #2
+  description: distinct drill rhythm with 4/3 syncopatied notes and a shifted second snare.
 
 jungle 1:
   pattern: 1, 2, 3, 4, 5, 7, 6, 8, | 11, 10, 11, 12, 13, 15, 14, 16, | 19, 18, 19, 20, 21, 23, 22, 24, | 27, 26, 27, 28, 29, 31, 30, 32
   scale: 1.5, 0.75, 0.5
+  description: Rhythm commonly used in jungle, otherwise sounds like a buildup snare pattern.
 
 jungle 2:
   pattern: 1, 2, 1, 2, | 3>0.5, 3>0.5, 1>0.5, 7>0.5, | 7>0.5, 7>0.5, 5>0.5, 11>0.5, | 11>0.5, 7>0.5, 0>0.5, 11>0.5, |  14>0.5, 11>0.5, 13>0.5, 15>0.5, 16!
   scale: 0.5
+  description: 4/3 syncopated snares with additional snare-rolls
 
 drumfunk:
   pattern: 1, 2, 3 , 4, | 3 , 4, 9, 7 , | 8, 10, 11 , 0>0.5, 11>0.5 , | 0>0.5, 15>0.5, 14, 15 , 16
   scale: 1, 0.5
+  description: pattern commonly used in drumfunk
 
 jazzy:
   pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
   scale: 0.5, 0.25
+  description: seamlessly adds a 4/3 syncopation without disrupting the original rhythm
 
 darkstep:
   pattern: 1,1,3,1, | 1,7,1,1, | 11,9,9,11, | 9,9,15,16
@@ -280,14 +338,17 @@ staccato reverese syncopated 3:
 BS6:
   pattern: 1, 1, | 3>1.5, 3>1.5, 3>1.5, 3>1.5, | 9, 9>0.5 | 14.5>1.5, 14.5>1.5, 14.5>1.5, 14.5>1.5, 14.5>0.5, 16!
   scale: 1, 0.5
+  description: Hyroglifics & Sinistarr - BS6
 
 Poison:
   pattern: 0:1/3, 0:1/3, 1:4/3, 1:4/3, 2:7/3, 2:7/3, 3:10/3, 3:10/3, 1/3:2/3, 4/3:5/3, 10/3:4
-  scale: 1, 
+  scale: 1
+  description: Stray & Halogenix - Poison
 
 Szamar Madar:
   pattern: 1, 2, 3, 4, 4, 1, 2, 3, 1, 1v0, 1v0, 1, 7, 8,|9, 10, 11, 12, 13, 14, 15, 16, 15, 10, 10, 10, 11, 16,|17, 18, 19, 20, 20, 17, 18, 19, 20, 20, 17, 17v0, 23, 24,|25, 25:25.5, 24:24.5, 27, 25, 28, 25, 31, 24:24.5, 27.5:28, 24:24.5, 27.5:28, 25, 25, 25, 31, 32
   scale: 0.5
+  description: Venetian Snares - Szamár Madár (11/4)
 
 Conceivability:
   pattern: 1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 16<0.5, 16>0.5, | 17, 18, 19>0.5, 20, 21, 21<0.5, 22, 23, 23<0.5, 24, 30, 31, 32>0.5
@@ -296,7 +357,9 @@ Conceivability:
 Rhythm Era:
   pattern: 1, 2>0.75, 2>0.75, 2>0.75, 2>0.25, | 5, 6>0.75, 8>0.75, 6>0.75, 8>0.25, | 9, 10>0.75, 10>0.75, 10>0.75, 10>0.25, | 13, 14>0.75v0.6; 16>0.75v0.6, 14>0.75, 14>0.5, 14>0.5v0.6; 16>0.5v0.6
   scale: 1
+  description: stunlocked - Rhythm Era (7/4)
 
 # ________________ OTHER ________________
 test:
   pattern: test
+  description: puts cowbells on beats

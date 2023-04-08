@@ -56,7 +56,7 @@ def BeatSwap(audiofile, pattern: str = 'test', scale:float = 1, shift:float = 0,
 
 audiofile=Audio(source='upload', type='filepath')
 patternbox = Textbox(label="Pattern:", placeholder="1, 3, 2, 4!", value="1, 2!", lines=1)
-scalebox = Textbox(value=1, label="Beatmap scale. At 2, every two beats will be merged, at 0.5 - a beat added between every two beats.", placeholder=1, lines=1)
+scalebox = Textbox(value=1, label="Beatmap scale. At 2, every two beat positions will be merged, at 0.5 - a beat position added between every two existing ones.", placeholder=1, lines=1)
 shiftbox = Textbox(value=0, label="Beatmap shift, in beats (applies before scaling):", placeholder=0, lines=1)
 cachebox = Checkbox(value=True, label="Enable caching generated beatmaps for faster loading. Saves a file with beat positions and loads it when you open same audio again.")
 beatdetectionbox = Checkbox(value=False, label='Enable support for variable BPM, however this makes beat detection slightly less accurate')
@@ -72,45 +72,73 @@ Colab version - https://colab.research.google.com/drive/1gEsZCCh2zMKqLmaGH5BPPLr
 
 # Basic usage
 
-Upload your audio, enter the beat swapping pattern, change scale and shift if needed, and run the app.
+Upload your audio, enter the beat swapping pattern, change scale and shift if needed, and run it.
 
-It can be useful to test where each beat is by writing `test` into the `pattern` field, which will put cowbells on each beat. Highest cowbell should be the on first beat.
+# pattern syntax
+The pattern syntax is quite powerful and you can do a whole bunch of stuff with it. 
 
-Use scale and shift to adjust the beatmap, for example if it is shifted 0.5 beats forward, set shift to -0.5. If it is two times faster than you want, set scale to 0.5
+Basic syntax is - `1, 3, 2, 4` means every 4 beats, swap 2nd and 3rd beats, but you can do much more, like applying audio effects, shuffling beats, slicing them, mixing two songs, adding samples, sidechain.
 
-Feel free to use complex patterns and very low scales - most of the computation time is in detecting beats, not swapping them.
+You can use spaces freely in patterns for formatting. Most other symbols have some use though. Here is the full syntax:
+#### beats
+* `1` - 1st beat;
+* `1>0.5` - first half of first beat
+* `1<0.5` - second half of first beat
+* `0:0.5` - range of beats, this also means first half of first beat, but with this you can do complex stuff like `1.25:1.5`. However this one is a bit more confusing because indexing starts from 0, so 1:2 is second beat, not first.
+* Also sometimes it is more convenient to use smaller `scale`, like 0.5 or 0.25, instead of slicing beats.
+#### basic patterns
+- `1, 3, 2, 4` - 3rd and 2nd beats will be swapped every 4 beats. Happens every 4 beats because 4 is the biggest number in the pattern.
+- `1, 2, 3, 4!` - every 4 beats, it will remove the 4th beat. `!` allows you to skip a beat but it still counts for pattern size.
+- Specifying pattern length: `pattern = '1, 2, 3', length = 4` is another way to remove 4th beat every 4 beats.
+- `1, 4` skips 2nd and 3rd beat
+- `1; 2` plays 1st and second beat at the same time.
+#### joining operators
+`,` and `;` are beat joining operators. Here are all available joiners:
+  - `,` puts the beat next to previous beat.
+  - `;` puts the beat on top of previous beat. Normalizes the volume to avoid clipping. If previous beat is shorter, your beat will be shortened to match it.
+  - `^` multiplies previous beat by your beat. This can be used for fake sidechain.
+  - `$` adds the beat on top of previous beat + sidechains previous beat by your beat (I haven't tested this one)
+#### effects
+beats can be followed by effects. For example `1s0.75` means take first beat and play it at 0.75x speed. Here are all available effects:
+  - `s` - speed. `1s2` means first beat will be played at 2x speed.
+  - `r` - reverse. `1r` means first beat will have reversed audio.
+  - `v` - volume. `1v0.5` means 1st beat will have 50% volume
+  - `d` - downsample, or 8-bit sound. `1d10` will downsample the first beat so that it sounds 8-bit. Good values start above 7.
+  - `b` - bitcrush. `1b4` will bitcrush it.
+  - `g` - gradient, sounds like highpass. `1g1` is the recommended value
+  - `c` - channel. If not followed by number, swaps channels. If followed by 0, plays only left channel. If 1, only right channel
+  - mixing effects - `1s2rd8` - take first beat, play at 2x speed, reversed, and downsampled.
+#### math
+mathematical expressions with `+`, `-`, `*`, `/`, and `**` are supported. For example, if you write `1/3` anywhere in the pattern, to slice beats or as effect value, it will be replaced by `0.33333333`
+#### using samples, mixing two songs
+- WIP (you can do that if you run locally, I am just figuring out gradio UI because that requires a bunch of new input interface)
+#### other stuff
+- `i` will be replaced by current position, e.g. `i, i, i, i+1` is equvalent to `1, 2, 3, 4 + 1`, or `1, 2, 3, 5`.
+- `#` will add shuffle all beats with the same number after it. `1#1, 2#2, 3#1, 4#2, 5#1, 6#2, 7#1, 8#2` will shuffle 1st, 3rd, 5th and 7th beats (the are in 1st group), and 2nd, 4th, 6th and 8th beats - from 2nd shuffle group.
+- `!` skips that beat. If you want to remove every 4th beat, you can't just do `1, 2, 3`, because that would simply play every 3 beats. So to play 3 beats every 4 beats, you can write `1, 2, 3, 4!`
+- `?` makes that beat not count for pattern size. For example, `1, 2, 3, 8` will normally repeat every 8 beats because 8 is the highest number, but `1, 2, 3, 8?` will repeat every 3 beats.
+- `@` allows you to take a random beat with the following syntax: @start_stop_step. For example, `@1_4_0.5` means it will take a random beat out of 1st, 1.5, 2nd, 2.5, 3rd, 3.5, and 4th. It will take whole beat, so you can also add `>0.5` to take only first half.
+- `%` - for very advanced patterns you can create variables from various metrics. For example, `%v` will create a variable with average volume of that beat, and all following `%` will be replaced by that variable until you create a new one. Useful for applying different effects based on different song metrics. All metrics are in `beat_manipulator/metrics.py`.
+#### special patterns
+You can write special commands into the `pattern` argument instead of actual patterns.
+- `reverse` - plays all beats in reverse chronological order
+- `shuffle` - shuffles all beats
+- `test` - puts different pitched cowbells on each beat, useful for testing beat detection and adjusting it using scale and shift. Each cowbell is 1 beat, highest pitched cowbell is the 1st beat, lowest pitched - 4th.
+#### complex patterns
+You should be able to use all of the above operators in any combination, as complex as you want. Very low scales should also be fine, up to 0.01.
+### scale
+`scale = 0.5` will insert a new beat position between every existing beat position in the beatmap. That allows you to make patterns on smaller intervals.
 
-# Pattern syntax
+`scale = 2`, on the other hand, will merge every two beat positions in the beatmap. Useful, for example, when beat map detection puts sees BPM as two times faster than it actually is, and puts beats in between every actual beat.
+### shift
+Shifts the beatmap, in beats. For example, if you want to remove 4th beat every four beats, you can do it by writing `1, 2, 3, 4!`. However sometimes it doesn't properly detect which beat is first, and for example remove 2nd beat every 4 beats instead. In that case, if you want 4th beat, use `shift = 2`. Also sometimes beats are detected right in between actual beats, so shift = 0.5 or -0.5 will fix it.
+## creating images
+You can create cool images based on beat positions. Each song produces its own unique image. This gradio app creates a 2048x2048 image from each song.
+## presets
+A bunch of example patterns: https://github.com/stunlocked1/beat_manipulator/blob/main/beat_manipulator/presets.yaml
 
-Patterns are sequences of expressions, separated by `,` - for example, `1>3/8,   1>3/8,   1>0.25,   2,   3>0.75s2,   3>3/8,   3>0.25,   4d9`. Spaces can be freely used for formatting as they will be ignored. Any other character that isnt used in the syntax can also be used for formatting but only between beats, not inside them.
-- `1, 3, 2, 4` - every 4 beats, swap 2nd and 3rd beat. This pattern loops every 4 beats, because 4 is the biggest number in it.
-- `1, 3, 4` - every 4 beats, skip 2nd beat.
-- `1, 2, 2, 4` - every 4 beats, repeat 2nd beat.
-- `1, 2!` - skip every second beat. `!` after a number sets length of the pattern (beat isnt played). `1, 2, 3, 4!` - skip every 4th beat.
-- `2>0.5` - play only first half of the second beat. `>` after a beat allows you to take first `i` of that beat.
-- `2<0.5` - play only second half of the second beat. `<` after a beat takes last `i` of that beat.
-- `1.5:4.5` - play a range of beats from 1.5 to 4.5. `0:0.5` means first half of 1st beat. Keep that in mind, to play first half of 5th beat, you do `4:4.5`, not `5:5.5`. `1` is equivalent to `0:1`. `1.5` is equivalent to `0.5:1.5`. `1,2,3,4` is `0:4`.
+Those are supposed to be used on normalized beat maps, where kick + snare is two beats, so make sure to adjust beatmaps using `scale` and `shift`.
 
-**Tip: instead of slicing beats, sometimes it is easier to make scale smaller, like 0.5 or 0.25.**
-- `1, 1>1/3, 1>1/3, 1<1/3` - you can use math expressions with `+`, `-`, `*`, `/` in place of numbers.
-- `1, 2, 3, 4!, 8?` - every 4 beats, 4th beat is replaced with 8th beat. `?` after a beat makes that number not count for looping. 
-- `v` + number - controls volume of that beat. `1v2` means 200% volume, `1v1/3` means 33.33% volume, etc.
-- `r` after a beat reverses that beat. `1r, 2` - every two beats, first beat will be reversed
-- another way to reverse - `4:0` is reversed `0:4`.
-- `s` + number - changes speed and pitch of that beat. 2 will be 2 times faster, 1/2 will be 2 times slower. Note: Only integers or 1/integer numbers are supported, everything else will be rounded.
-- `c` - if not followed by a number, swaps left and right channels of the beat. If followed by 0, mutes left channel, 1 - right channel.
-- `b` + number - bitcrush. The higher the number, the stronger the effect. Barely noticeable at values less then 1
-- `d` + number - downsample (8-bit sound). The higher the number, the stronger the effect. Starts being noticeable at 3, good 8-bit sounding values are around 8+.
-- `t` + number - saturation
-- you can combine stuff like `0:1/3d8v2cr` - that line means 0:1/3 beat will be downsampled, 200% volume, swapped channels, and reversed
-
-there are certain commands you can write in pattern instead of the actual pattern:
-- `random` - each beat will be randomly selected from all beats, basically similar to shuffling all beats
-- `reverse` - reverses the order of all beats
-- `test` - test beat detection by putting cowbells on each beat. The highest pitched cowbell should be on the first beat; next cowbell should be on the snare. If it is not, use scale and shift.
-
-There are also some interesting patterns there: https://github.com/stunlocked1/BeatManipulator/blob/main/presets.json. Those are meant to be used with properly adjusted shift and scale, where 1st beat is 1st kick, 2nd beat is the snare after it, etc.
-
-Check my soundcloud https://soundcloud.com/stunlocked
+# My soundcloud https://soundcloud.com/stunlocked
 """
  ).launch(share=False)
