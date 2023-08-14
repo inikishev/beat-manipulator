@@ -1,0 +1,12 @@
+cython
+mido
+numpy
+scipy
+pytest
+pyfftw
+soundfile
+ffmpeg-python
+librosa
+pedalboard
+opencv-python
+git+https://github.com/CPJKU/madmom
