@@ -153,7 +153,7 @@ def _outputfilename(path:str = None, filename:str = None, suffix:str = None, ext
     """If path has file extension, returns `path + suffix + ext`. Else returns `path + filename + suffix + .ext`. If nothing is specified, returns `output.mp3`"""
     if ext is not None:
         if not ext.startswith('.'): ext = '.'+ext
-    if path is None: path = ''
+    if path is None: path = 'output'
     if path.endswith('/') or path.endswith('\\'): path=path[:-1]
     if '.' in path:
         path = path.split('.')

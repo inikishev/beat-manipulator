@@ -10,9 +10,9 @@ def presets_load(path, mode = 'add'):
     with open(path, 'r') as f:
         yaml_presets = yaml.safe_load(f.read())
     
-    if mode.lower() == 'add':
-        presets = presets | yaml_presets
-    elif mode.lower() == 'replace':
+    # if mode.lower() == 'add':
+    #     presets = presets | yaml_presets
+    # elif mode.lower() == 'replace':
         presets = yaml_presets
 
 presets_load('beat_manipulator/presets.yaml')

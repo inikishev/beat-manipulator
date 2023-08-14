@@ -215,11 +215,16 @@ dotted chaos 2:
 dotted pattern 1:
   pattern: 1, 2>0.75,   2>0.25, 1.25:1.75;3, 2>0.75, 2>0.75, 2>0.75, 2>0.25, 1.25:1.75;5, 2>0.75, 2>0.75;7, 2>0.75, 2>0.25;8<0.25
   scale: 0.5
-  description: plays part between first kick and snare in a 4/3 syncopation, with original drums on top.
+  description: plays part between first kick and snare in a 8/3 syncopation, with original drums on top.
 
 dotted pattern 2:
   pattern: 1, 2>0.75,   2>0.25, 1.25:1.75;3, 4>0.75, 4>0.75, 4>0.75, 4>0.25, 3.25:3.75;5, 6>0.75, 6>0.75;7, 8>0.75, 6>0.25;8<0.25
   scale: 0.5
+  description: plays parts between each kick and snare in a 8/3 syncopation, with original drums on top.
+
+dotted pattern 3:
+  pattern: 1>0.75,     3>0.25,2>0.5,     3>0.75,    3>0.75,    4>0.75,    5>0.75,    5>0.5,6>0.25,    7>0.75,    7>0.75,    7>0.25,8
+  scale: 1
   description: plays parts between each kick and snare in a 4/3 syncopation, with original drums on top.
 
 # ________________ TIME SIGNATURES ________________
