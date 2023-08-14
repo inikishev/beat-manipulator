@@ -8,6 +8,7 @@
 import beat_manipulator as bm, sys
 #args=['whatevr', '-i', r'F:\Stuff\Music\Tracks\e-veryday - e-verynight.mp3', '--pattern', '1,3,2,4']
 args=[i.replace('--', '-') if i.startswith('-') else i for i in sys.argv]
+args=[i[1:-1] if (i.startswith('"') and i.endswith('"')) else i for i in sys.argv]
 def arg(a, args:list=args):
     if a in args and len(args)>args.index(a):return args[args.index(a)+1]
 
