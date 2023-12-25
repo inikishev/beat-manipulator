@@ -191,3 +191,6 @@ To use one of the presets from that file, write:
 ```
 bm.presets.use(song = song, preset = 'preset name', scale = 1, shift = 0)
 ```
+# Contributing
+
+I will clean up the code and then it will be possible to actually understand what is going on. That will happen... At some point
