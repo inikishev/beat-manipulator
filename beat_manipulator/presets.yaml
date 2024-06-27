@@ -322,6 +322,391 @@ darkstep fast:
   pattern: 1,1,5,1, | 1,13,1,1, | 21,17,17,21, | 17,17,29,32
   scale: 0.25
 
+big room house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+chill & tropical house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+chillhop:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Piano/Rhodes, Chords, FX
+
+chillout:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Melodic synth, Pads, FX
+
+chillstep:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.5 beats
+    description: 4/3 syncopated snares with additional snare-rolls
+
+club dubstep:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.25 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Sub-bass, Wobble bass, Synth, FX
+
+dark dnb:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 2
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Breakbeat, FX
+
+deep house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Chords, Pads, FX
+
+deep tech:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Chords, Pads, FX
+
+downtempo lounge:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Piano/Rhodes, Pads, FX
+
+drum and bass (dnb):
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 2
+    shift: 0 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Breakbeat, Pad/Atmosphere
+
+drumstep:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0.5 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Sub-bass, Wobble bass, Synth, FX
+
+dubstep:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.5 beats
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Sub-bass, Wobble bass, Synth, FX
+
+electro swing:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Brass/Swing sample, Synth, FX
+
+eurodance:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+future bass:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.25
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+future garage:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.25
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Chords, FX
+
+handsup:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+hardcore:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+hardstyle:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+liquid dnb:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 2
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Breakbeat, Pad/Atmosphere
+
+liquid dubstep:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.5
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Sub-bass, Synth, Pads, FX
+
+liquid trap:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.25
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+melodic progressive:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Melodic synth, Chords, FX
+
+nightcore:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+trance:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+trap:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.25
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Sub-bass, Lead synth, Chords, FX
+
+tribal house:
+    pattern: 1, 2, 3, 4, | 5, 6, 7, 8, | 9, 10, 11, 12, | 13, 14, 15, 16
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Clap, Hi-hat (closed), Congas, Bongos, Shaker, FX
+
+trip hop:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Piano/Rhodes, Pads, FX
+
+tropical house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+uk garage:
+    pattern: 1, 2, 3, 4, | 5, 6, 7, 8, | 9, 10, 11, 12, | 13, 14, 15, 16
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Clap, Hi-hat (closed), Bassline, Lead synth, Chords, FX
+
+uplifting trance:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+vaporwave:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Pads, FX
+
+vocal trance:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+west coast hip hop:
+    pattern: 1, 2, 3, 4, | 5, 6, 7, 8, | 9, 10, 11, 12, | 13, 14, 15, 16
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Clap, Hi-hat (closed), Bassline, Lead synth, Chords, FX
+
+wonky:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Pads, FX
+
+zouk:
+    pattern: 1, 2, 3, 4, | 5, 6, 7, 8, | 9, 10, 11, 12, | 13, 14, 15, 16
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Clap, Hi-hat (closed), Bassline, Lead synth, Chords, FX
+
+drill:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Synth, Pads, FX
+
+slowtrap:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 0.5
+    shift: 0.25
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Sub-bass, Lead synth, Chords, FX
+
+bhangra:
+    pattern: 1, 2, 3, 4, | 5, 6, 7, 8, | 9, 10, 11, 12, | 13, 14, 15, 16
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Clap, Hi-hat (closed), Bassline, Lead synth, Chords, FX
+
+afrobeat:
+    pattern: 1, 2, 3, 4, | 5, 6, 7, 8, | 9, 10, 11, 12, | 13, 14, 15, 16
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Clap, Hi-hat (closed), Bassline, Lead synth, Chords, FX
+
+tropical house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+progressive house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+acid house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+tribal house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Percussion, Lead synth, Chords, FX
+
+deep tech house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Chords, Pads, FX
+
+minimal techno:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Percussion, Synth, FX
+
+psytrance:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Acid synth, Psy synth, FX
+
+progressive house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+acid house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Lead synth, Chords, FX
+
+tribal house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Percussion, Lead synth, Chords, FX
+
+deep tech house:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Chords, Pads, FX
+
+minimal techno:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Percussion, Synth, FX
+
+psytrance:
+    pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+    scale: 1
+    shift: 0
+    description: Kick, Snare, Hi-hat (closed), Hi-hat (open), Bassline, Acid synth, Psy synth, FX
+
+moombahton:
+  pattern: 1>0.75, 2>0.25, 1>0.5, 4>0.5
+  scale: 3, 2, 1
+
+four-on-the-floor 1:
+  pattern: 1, 2, 1, 4, 1, 6, 1, 8, 1, 10, 1, 12, 1, 14, 1, 16
+  scale: 0.5
+
+house 1:
+  pattern: 1, 2, 3, 4, 1, 6, 7, 8, 1, 10, 11, 12, 1, 14, 15, 16
+  scale: 0.5
+
+drill:
+  pattern: 1>0.75, 2>0.75, 2>0.5,  3>0.75, 4>0.75, 4>0.5,  5>0.75, 6>0.75, 6>0.5,  6, 7>0.75, 8<0.25
+  scale: 1, 0.5, 0.25
+
+jungle 1:
+  pattern: 1, 2, 3, 4, 5, 7, 6, 8, | 11, 10, 11, 12, 13, 15, 14, 16, | 19, 18, 19, 20, 21, 23, 22, 24, | 27, 26, 27, 28, 29, 31, 30, 32
+  scale: 1.5, 0.75, 0.5
+
+darkstep:
+  pattern: 1,1,3,1, | 1,7,1,1, | 11,9,9,11, | 9,9,15,16
+  scale: 1, 0.5
+
+big room house:
+  pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+  scale: 1
+
+chill & tropical house:
+  pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+  scale: 1
+
+chillhop:
+  pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+  scale: 1
+
+chillout:
+  pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+  scale: 1
+
+chillstep:
+  pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+  scale: 0.5
+
+club dubstep:
+  pattern: 1, 2>0.5, 3, 4>0.5, 5, 6>0.5, 3, 4>0.5, 7, 8
+  scale: 0.5
+
+future house:
+  pattern: 1, 2, 3, 4, 5, 6, 7, 8
+  scale: 1
+
+liquid future bass:
+  pattern: 1>0.5, 2>0.5, 3>0.5, 4>0.5, 5>0.5, 6>0.5, 7>0.5, 8>0.5
+  scale: 1
+
+liquid future house:
+  pattern: 1>0.75, 2>0.25, 1>0.5, 4>0.5
+  scale: 1
+
+
 # ________________ EFFECTS ________________
 staccato reverese:
   pattern: 1>0.5, 0.5:0.8r, 0.5:0.8, 0.5:0.8r, 0.5:0.8, 0.5:0.8r, 3>0.6, 0.5:0.8r, 0.5:0.8, 0.5:0.8r, 0.5:0.8, 0.5:0.7r, 5>0.5, 0.5:0.8r, 0.5:0.8, 0.5:0.8r, 0.5:0.8, 0.5:0.8r, 7>0.6, 0.5:0.8r, 0.5:0.8, 0.5:0.8r, 7.6:7.9, 7.0>0
