@@ -1,6 +1,6 @@
 cython
 mido
-numpy
+numpy<2
 scipy
 pytest
 pyfftw
